@@ -2,6 +2,12 @@
 
 괴물을 죽이고 신체 기관을 이식하는 **키보드 전용 2D 액션 서바이버 로그라이크** 프로토타입입니다. 기존 DEAD MEMORY의 JavaScript + Canvas 엔진과 배포 구조를 유지하고 새 [개발 명세 v1.1](docs/MEAT-MARKET-SPECIFICATION.md)에 맞춰 전환했습니다.
 
+## 다운로드해서 바로 플레이
+
+**[게임 ZIP 다운로드](https://github.com/ghkdwo0202-crypto/dead-memory/raw/refs/heads/main/downloads/MEAT-MARKET.zip)** → 압축 풀기 → `MEAT-MARKET.html`을 Chrome 또는 Edge로 열기 → Enter.
+
+`npm run build:standalone`으로 `.local/standalone/MEAT-MARKET.html`을 만들 수 있습니다. 이 파일 하나를 PC로 옮겨 Chrome 또는 Edge로 열면 됩니다. HTML 안에 코드와 스타일이 모두 포함되어 있으므로 플레이할 때 Node.js, 개발 서버, 인터넷 연결이 필요하지 않습니다. `npm run build:download`는 같은 파일과 실행 안내를 ZIP으로 묶어 `downloads/MEAT-MARKET.zip`을 갱신합니다.
+
 ## 플레이
 
 GitHub Pages 배포가 완료되면 **https://ghkdwo0202-crypto.github.io/dead-memory/** 에서 설치 없이 플레이합니다. 저장소/주소는 유지하고 게임 이름과 내용만 변경했습니다. PC 키보드가 필요합니다.
@@ -69,3 +75,5 @@ npm run test:browser
 ## GitHub Pages 배포
 
 `main`에 푸시하면 `Deploy game to GitHub Pages` 워크플로가 테스트 후 게임 파일만 배포합니다. 진행 상황은 저장소의 Actions에서 확인합니다. 자동 사이트 생성이 권한 문제로 실패하면 **Settings → Pages → Build and deployment → Source → GitHub Actions**를 선택한 뒤 워크플로를 재실행하세요. 클라우드 환경 자체의 게시와는 별개입니다.
+
+최초 Pages 사이트 생성은 기본 Actions 토큰으로 권한 오류(`Resource not accessible by integration`)가 날 수 있습니다. 이 경우 저장소 관리자가 Pages 설정에서 Source를 GitHub Actions로 선택해 사이트를 활성화해야 합니다. 단순 재실행만으로는 권한 문제가 해결되지 않습니다.

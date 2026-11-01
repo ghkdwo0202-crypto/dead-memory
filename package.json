@@ -8,7 +8,9 @@
     "build:pages": "node scripts/build-pages.mjs",
     "test": "node tests/combat.test.js",
     "check": "node --check src/game.js && node --check src/core.js && node --check src/data.js && node --check src/render.js && node --check src/navigation.js && node --check src/storage.js",
-    "test:browser": "node scripts/browser-smoke.mjs"
+    "test:browser": "node scripts/browser-smoke.mjs",
+    "build:standalone": "node scripts/build-standalone.mjs",
+    "build:download": "node scripts/build-standalone.mjs --release"
   },
   "engines": {
     "node": ">=22"
