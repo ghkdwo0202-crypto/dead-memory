@@ -1,3 +1,7 @@
+# 최신 추가: v0.3 톱날 액션 축
+
+사용자의 액션 성장 요청에 따른 변경/검증/제한은 [Phase 1 보고](PHASE1-ACTION-AXIS.md)에 기록했다. 아래 내용은 기존 v0.2 기준선이다. 기존 40개 테스트를 유지하면서 새 액션 테스트 19개를 추가했다.
+
 # MEAT MARKET v0.2 구현 현황
 
 기존 JavaScript ES modules + Canvas 2D 엔진, Node 개발 서버, 정적 GitHub Pages 배포를 유지했다. 공통 이벤트 발행 구조와 시야·BFS 경로 탐색, 브라우저 저장/테스트 방식을 재사용했다. 기존 Q/E/F 공명 게임은 명세에 따라 기관·변이 기반 생존 게임으로 전환했다. 이전 구현은 Git 커밋 ec3fb70/a77bc7d, `docs/DEAD-MEMORY-IMPLEMENTATION.md`, `docs/SPECIFICATION.md`에 남아 있다.

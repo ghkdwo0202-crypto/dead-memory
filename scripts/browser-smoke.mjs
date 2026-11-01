@@ -119,20 +119,20 @@ try {
   const frozen = s.time;
   await page.clock.runFor(500);
   assert.equal((await snapshot(page)).time, frozen);
-  await page.keyboard.press("ArrowDown");
-  assert.equal((await snapshot(page)).selection, 1);
-  await page.keyboard.press("ArrowUp");
+  const actionIndex = s.rewardChoices.findIndex((r) => r.kind === "action");
+  assert.ok(actionIndex >= 0);
+  for (let i = 0; i < actionIndex; i++) await page.keyboard.press("ArrowDown");
   await page.keyboard.press("Enter");
   await page.clock.runFor(100);
   s = await snapshot(page);
-  assert.ok(s.player.organs.back);
+  assert.equal(s.player.actionRanks.ARM_SAW_FLOW, 1);
   assert.equal(s.mode, "playing");
   await page.screenshot({
     path: ".local/browser/meat-market-combat.png",
     fullPage: true,
   });
   console.log(
-    "PASS: keyboard-only menu, movement + attack, directional dash, special, pause, combat, XP, three rewards, graft",
+    "PASS: keyboard-only menu, movement + attack, dash, special, pause, XP and action-upgrade selection",
   );
   // Fresh profile: a real death persists through page reload; test summon reproduces that build.
   const life = await pageWithClock();
@@ -174,6 +174,100 @@ try {
   assert.deepEqual(s.hunter.organs, saved);
   console.log(
     "PASS: real death, persistent archive after reload, keyboard forced hunter, saved organ build",
+  );
+  const preview = await pageWithClock();
+  await preview.keyboard.press("ArrowUp");
+  await preview.keyboard.press("Enter");
+  await preview.clock.runFor(100);
+  let ps = await snapshot(preview);
+  assert.equal(ps.previewActions, true);
+  assert.equal(ps.player.actionRanks.ARM_SAW_FLOW, 3);
+  assert.equal(await preview.locator(".action-stage.unlocked").count(), 3);
+  held.clear();
+  for (let i = 0; i < 250; i++) {
+    ps = await snapshot(preview);
+    assert.notEqual(ps.mode, "dead");
+    if (ps.player.finisherUntil > ps.time) break;
+    if (ps.mode === "levelup") {
+      await setKeys(preview, []);
+      await preview.keyboard.press("Enter");
+      continue;
+    }
+    const target = ps.enemies.sort(
+        (a, b) =>
+          Math.hypot(a.x - ps.player.x, a.y - ps.player.y) -
+          Math.hypot(b.x - ps.player.x, b.y - ps.player.y),
+      )[0],
+      inputs = ["z"];
+    if (target) {
+      const dx = target.x - ps.player.x,
+        dy = target.y - ps.player.y;
+      if (Math.hypot(dx, dy) > 50) {
+        if (dx > 20) inputs.push("ArrowRight");
+        if (dx < -20) inputs.push("ArrowLeft");
+        if (dy > 20) inputs.push("ArrowDown");
+        if (dy < -20) inputs.push("ArrowUp");
+      }
+    }
+    await setKeys(preview, inputs);
+    await preview.clock.runFor(80);
+  }
+  await setKeys(preview, []);
+  ps = await snapshot(preview);
+  assert.ok(ps.player.finisherUntil > ps.time);
+  assert.ok(ps.player.stats.thirdStrikes >= 1);
+  if (ps.mode === "levelup") {
+    await preview.keyboard.press("Enter");
+    await preview.clock.runFor(20);
+  }
+  await preview.keyboard.press("c");
+  for (let i = 0; i < 20; i++) {
+    await preview.clock.runFor(80);
+    ps = await snapshot(preview);
+    if (ps.player.stats.finishers >= 1) break;
+    if (ps.mode === "levelup") {
+      do {
+        await preview.keyboard.press("Enter");
+        await preview.clock.runFor(20);
+        ps = await snapshot(preview);
+      } while (ps.mode === "levelup");
+      // An equipment selection intentionally clears the attack buffer; resume the promised C window.
+      await preview.keyboard.press("c");
+    }
+  }
+  ps = await snapshot(preview);
+  assert.equal(
+    ps.player.stats.finishers,
+    1,
+    JSON.stringify({
+      mode: ps.mode,
+      time: ps.time,
+      attack: ps.player.attack,
+      finisherUntil: ps.player.finisherUntil,
+      stats: ps.player.stats,
+    }),
+  );
+  await preview.screenshot({
+    path: ".local/browser/saw-action-preview.png",
+    fullPage: true,
+  });
+  while (ps.mode === "levelup") {
+    await preview.keyboard.press("Enter");
+    await preview.clock.runFor(20);
+    ps = await snapshot(preview);
+  }
+  await preview.clock.runFor(150);
+  await preview.keyboard.down("ArrowUp");
+  await preview.keyboard.press("x");
+  await preview.keyboard.down("z");
+  await preview.clock.runFor(400);
+  await preview.keyboard.up("z");
+  await preview.keyboard.up("ArrowUp");
+  ps = await snapshot(preview);
+  assert.ok(ps.player.stats.dashCuts >= 1);
+  assert.equal(ps.records, 0);
+  console.log(
+    "PASS: keyboard action preview, same-target third hit, buffered C finisher, X→Z dash cut; no fake death record",
   );
   assert.deepEqual(errors, []);
   console.log("PASS: no browser runtime errors");

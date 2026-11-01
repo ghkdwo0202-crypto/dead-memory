@@ -6,6 +6,9 @@ import {
   ENEMIES,
   OBSTACLES,
   compatible,
+  ACTION_UPGRADES,
+  actionRank,
+  sanitizeActionRanks,
 } from "./data.js";
 import { distance, lineOfSight, findPath } from "./navigation.js";
 export { distance } from "./navigation.js";
@@ -92,6 +95,15 @@ export class Actor {
       dead: false,
       face: 0,
       lastMove: { x: 1, y: 0 },
+      lastNonZeroFacing: 0,
+      actionRanks: {},
+      sawCombo: { targetId: null, hits: 0, until: 0 },
+      finisherUntil: 0,
+      lastDashAt: -Infinity,
+      dashSerial: 0,
+      dashLinkUsed: 0,
+      receivedAttacks: new Map(),
+      evadedAttacks: new Map(),
       organs: { arm: null, back: null, heart: null, eye: null },
       mutations: [],
       statuses: {},
@@ -106,6 +118,9 @@ export class Actor {
         specials: 0,
         dashes: 0,
         evades: 0,
+        dashCuts: 0,
+        finishers: 0,
+        thirdStrikes: 0,
       },
       invulnerableUntil: 0,
       attack: null,
@@ -147,7 +162,12 @@ export class OrganSystem {
     actor.timers = {};
     actor.attack = null;
     actor.buffer = null;
-    if (organ.slot === "arm") actor.specialAt = 0;
+    if (organ.slot === "arm") {
+      actor.specialAt = 0;
+      actor.sawCombo = { targetId: null, hits: 0, until: 0 };
+      actor.finisherUntil = 0;
+      actor.dashLinkUsed = actor.dashSerial;
+    }
     return true;
   }
   static mutate(actor, id, organID) {
@@ -172,7 +192,13 @@ export function targetFor(actor, targets, rule = actor.arm?.targetingRule) {
           angleDelta(Math.atan2(e.y - actor.y, e.x - actor.x), actor.face) <=
             rule.assistAngle,
       )
-      .sort((a, b) => distance(actor, a) - distance(actor, b))[0] || null
+      .sort(
+        (a, b) =>
+          angleDelta(Math.atan2(a.y - actor.y, a.x - actor.x), actor.face) -
+            angleDelta(Math.atan2(b.y - actor.y, b.x - actor.x), actor.face) ||
+          distance(actor, a) - distance(actor, b) ||
+          String(a.id).localeCompare(String(b.id)),
+      )[0] || null
   );
 }
 export function rewardCandidates(actor, random = Math.random) {
@@ -200,7 +226,14 @@ export function rewardCandidates(actor, random = Math.random) {
     { kind: "upgrade", id: "health", synergy: false },
     { kind: "upgrade", id: "speed", synergy: false },
   ];
-  const pool = [...organs, ...mutations]
+  const actions = Object.values(ACTION_UPGRADES)
+    .filter(
+      (d) =>
+        actor.organs.arm === d.organID &&
+        (actor.actionRanks[d.id] || 0) < d.maxRank,
+    )
+    .map((d) => ({ kind: "action", id: d.id, synergy: true }));
+  const pool = [...organs, ...mutations, ...actions]
     .map((value) => ({ value, n: random() }))
     .sort((a, b) => a.n - b.n)
     .map((x) => x.value);
@@ -210,7 +243,7 @@ export function rewardCandidates(actor, random = Math.random) {
     : !actor.organs.heart
       ? pool.find((x) => x.kind === "organ" && ORGANS[x.id].slot === "heart")
       : pool.find((x) => x.synergy);
-  const synergy = pool.find((x) => x.synergy && x !== priority);
+  const synergy = actions[0] || pool.find((x) => x.synergy && x !== priority);
   return [
     ...new Set([
       ...(priority ? [priority] : []),
@@ -221,6 +254,17 @@ export function rewardCandidates(actor, random = Math.random) {
   ].slice(0, 3);
 }
 export function applyReward(actor, reward) {
+  if (reward.kind === "action") {
+    const d = ACTION_UPGRADES[reward.id];
+    if (
+      !d ||
+      actor.organs.arm !== d.organID ||
+      (actor.actionRanks[d.id] || 0) >= d.maxRank
+    )
+      return false;
+    actor.actionRanks[d.id] = (actor.actionRanks[d.id] || 0) + 1;
+    return true;
+  }
   if (reward.kind === "organ") return OrganSystem.equip(actor, reward.id);
   if (reward.kind === "mutation")
     return OrganSystem.mutate(actor, reward.id, reward.organID);
@@ -277,6 +321,7 @@ export function saveDeath(
     specialAttackProfile: actor.arm.id,
     autoAttackProfiles: [actor.organs.back].filter(Boolean),
     combatStatistics: { ...actor.stats },
+    upgradeRanksById: sanitizeActionRanks(actor.actionRanks),
     deathTime: time,
     deathCause: cause,
     createdAt: new Date().toISOString(),
@@ -301,6 +346,7 @@ export function createHunter(record, x, y) {
   for (const id of Object.values(record.equippedOrganIDs))
     if (id) OrganSystem.equip(a, id);
   for (const m of record.mutationIDs) OrganSystem.mutate(a, m.id, m.organID);
+  a.actionRanks = sanitizeActionRanks(record.upgradeRanksById);
   a.state = "Patrol";
   a.record = record;
   a.lastSeen = null;
@@ -314,10 +360,12 @@ export class Game {
     storage = { getItem: () => null, setItem: () => {} },
     random = Math.random,
     forceHunter = false,
+    previewActions = false,
   } = {}) {
     this.storage = storage;
     this.random = random;
     this.forceHunter = forceHunter;
+    this.previewActions = Boolean(previewActions);
     this.records = loadDeaths(storage);
     this.runID = uid();
     this.t = 0;
@@ -331,6 +379,7 @@ export class Game {
     this.hunterChecked = false;
     this.bossSpawned = false;
     this.player = new Actor({ id: "player", team: "player", organs: true });
+    if (this.previewActions) this.player.actionRanks.ARM_SAW_FLOW = 3;
     this.enemies = [];
     this.projectiles = [];
     this.orbs = [];
@@ -463,12 +512,24 @@ export class Game {
     if (actor.dead || !actor.arm || actor.statuses.stun) return false;
     if (special && actor.specialAt > this.t) return false;
     if (actor.dashUntil > this.t || actor.attack) {
+      const primedFinisher =
+        special && actionRank(actor) >= 2 && actor.finisherUntil > this.t;
+      if (actor.buffer?.special && !special && actor.buffer.until >= this.t)
+        return false;
       if (
         buffer &&
-        (actor.dashUntil > this.t ||
-          actor.attack.endAt - this.t < CONFIG.attackBuffer)
+        (primedFinisher ||
+          actor.dashUntil > this.t ||
+          actor.attack.endAt - this.t <
+            (actor.arm.baseStats.bufferWindow || CONFIG.attackBuffer))
       )
-        actor.buffer = { special, until: this.t + CONFIG.attackBuffer };
+        actor.buffer = {
+          special,
+          until: Math.max(
+            this.t + (actor.arm.baseStats.bufferWindow || CONFIG.attackBuffer),
+            primedFinisher ? (actor.attack?.endAt || this.t) + 0.05 : 0,
+          ),
+        };
       return false;
     }
     const arm = actor.arm,
@@ -486,20 +547,51 @@ export class Game {
       ),
       angle = target
         ? Math.atan2(target.y - actor.y, target.x - actor.x)
-        : actor.face;
+        : actor.lastNonZeroFacing;
     actor.face = angle;
     actor.faceLockUntil = this.t + arm.targetingRule.directionLock;
+    const rank = actionRank(actor),
+      flow = ACTION_UPGRADES.ARM_SAW_FLOW;
+    const predicted =
+      !special &&
+      arm.id === "ARM_SAW" &&
+      target &&
+      actor.sawCombo.targetId === target.id &&
+      this.t <= actor.sawCombo.until
+        ? actor.sawCombo.hits + 1
+        : 1;
+    const dashCut =
+      !special &&
+      rank >= 1 &&
+      this.t - actor.lastDashAt <= flow.dashWindow &&
+      actor.dashLinkUsed !== actor.dashSerial;
+    const finisher = special && rank >= 2 && actor.finisherUntil > this.t;
     const speed = this.haste(actor),
-      windup = special ? s.windup + 0.12 : s.windup;
+      windup = special
+        ? s.windup + 0.12
+        : arm.id === "ARM_SAW"
+          ? s.comboWindups[(predicted - 1) % 3]
+          : s.windup;
+    const recovery =
+      !special && arm.id === "ARM_SAW"
+        ? s.comboRecoveries[(predicted - 1) % 3]
+        : s.recovery;
+    if (dashCut) actor.dashLinkUsed = actor.dashSerial;
+    if (finisher) actor.finisherUntil = 0;
     actor.attack = {
       id: ++this.attackSerial,
       organID: arm.id,
       angle,
       special,
+      targetId: target?.id || null,
+      previewStrike: predicted,
+      dashCut,
+      finisher,
+      rank,
       start: this.t,
       activeAt: this.t + windup / speed,
       endAt:
-        this.t + (windup + s.active + s.recovery * (special ? 1.4 : 1)) / speed,
+        this.t + (windup + s.active + recovery * (special ? 1.4 : 1)) / speed,
       executed: false,
     };
     actor.stats[special ? "specials" : "attacks"]++;
@@ -530,10 +622,18 @@ export class Game {
     )
       return false;
     const dir = direction(input),
-      chosen = dir.x || dir.y ? dir : actor.lastMove;
+      chosen =
+        dir.x || dir.y
+          ? dir
+          : {
+              x: Math.cos(actor.lastNonZeroFacing),
+              y: Math.sin(actor.lastNonZeroFacing),
+            };
     actor.attack = null;
     actor.dashes--;
     actor.stats.dashes++;
+    actor.lastDashAt = this.t;
+    actor.dashSerial++;
     actor.dashDirection = { ...chosen };
     actor.dashUntil = this.t + CONFIG.dash.duration;
     actor.invulnerableUntil = this.t + CONFIG.dash.invulnerable;
@@ -577,11 +677,31 @@ export class Game {
       context = null,
       knockback = 0,
       stagger = 0,
+      attackInstanceId = null,
     } = {},
   ) {
     if (!target || target.dead || source === target) return 0;
+    const attackKey =
+      attackInstanceId === null ? null : String(attackInstanceId);
+    if (
+      attackKey &&
+      (target.receivedAttacks.has(attackKey) ||
+        target.evadedAttacks.has(attackKey))
+    )
+      return 0;
     if (target.invulnerableUntil > this.t) {
-      if (!target.evadedThisDash && target.dashUntil > this.t) {
+      if (
+        (attackKey || !target.evadedThisDash) &&
+        target.dashUntil > this.t &&
+        source.team !== target.team
+      ) {
+        if (attackKey) {
+          target.evadedAttacks.set(attackKey, this.t);
+          if (target.evadedAttacks.size > 128)
+            target.evadedAttacks.delete(
+              target.evadedAttacks.keys().next().value,
+            );
+        }
         target.evadedThisDash = true;
         target.stats.evades++;
         this.events.emit(
@@ -591,6 +711,7 @@ export class Game {
             target: source,
             organID: target.organs.arm,
             sourceID: "evade",
+            attackInstanceId: attackKey,
           },
           context,
         );
@@ -629,6 +750,13 @@ export class Game {
     const critical = direct && this.random() < (source.critChance || 0),
       actual = Math.min(target.hp, amount * multiplier * (critical ? 1.5 : 1));
     target.hp -= actual;
+    if (attackKey && actual > 0) {
+      target.receivedAttacks.set(attackKey, this.t);
+      if (target.receivedAttacks.size > 256)
+        target.receivedAttacks.delete(
+          target.receivedAttacks.keys().next().value,
+        );
+    }
     if (target.team === "player") target.hurtUntil = this.t + 0.45;
     target.flashUntil = this.t + 0.08;
     target.staggerUntil = Math.max(target.staggerUntil, this.t + stagger);
@@ -655,7 +783,14 @@ export class Game {
       this.hitstop = Math.max(this.hitstop, 0.018);
       this.events.emit(
         "OnDirectHit",
-        { actor: source, target, organID, damage: actual, sourceID: organID },
+        {
+          actor: source,
+          target,
+          organID,
+          damage: actual,
+          sourceID: organID,
+          attackInstanceId: attackKey,
+        },
         context,
       );
     }
@@ -669,6 +804,7 @@ export class Game {
         sourceID: organID,
         mutation,
         status,
+        attackInstanceId: attackKey,
       },
       context,
     );
@@ -679,7 +815,13 @@ export class Game {
       if (source.stats) source.stats.kills++;
       this.events.emit(
         "OnKill",
-        { actor: source, target, organID, sourceID: organID },
+        {
+          actor: source,
+          target,
+          organID,
+          sourceID: organID,
+          attackInstanceId: attackKey,
+        },
         context,
       );
       this.onDeath(target, source);
@@ -699,11 +841,13 @@ export class Game {
       direct = true,
       context = null,
       small = false,
+      attackInstanceId = null,
     } = {},
   ) {
     if (this.projectiles.length >= CONFIG.maxProjectiles) return;
     this.projectiles.push({
       id: uid(),
+      attackInstanceId: attackInstanceId ?? `projectile:${++this.attackSerial}`,
       actor,
       organID,
       x,
@@ -725,58 +869,164 @@ export class Game {
   }
   executeAttack(actor, attack, scale = 1, context = null) {
     const organ = ORGANS[attack.organID];
-    if (!organ) return;
-    const s = organ.baseStats;
+    if (!organ || (scale === 1 && attack.resolved)) return;
+    if (scale === 1) attack.resolved = true;
+    const s = organ.baseStats,
+      saw = organ.id === "ARM_SAW",
+      native = saw && scale === 1,
+      flow = ACTION_UPGRADES.ARM_SAW_FLOW;
+    if (native && attack.dashCut) {
+      actor.stats.dashCuts++;
+      this.move(
+        actor,
+        Math.cos(attack.angle) * flow.lungeDistance,
+        Math.sin(attack.angle) * flow.lungeDistance,
+      );
+      this.effect("dash", actor.x, actor.y, {
+        angle: attack.angle,
+        life: 0.25,
+      });
+    }
+    if (native && attack.finisher) {
+      actor.stats.finishers++;
+      if (actor.team === "player") this.notify("회수 회전", "FINISHER / C");
+    }
+    if (native && attack.finisher)
+      for (const e of this.targets(actor).filter(
+        (e) => distance(actor, e) < 210 && this.visible(actor, e),
+      )) {
+        const d = distance(actor, e) || 1;
+        const from = { x: e.x, y: e.y };
+        this.move(
+          e,
+          ((actor.x - e.x) / d) *
+            Math.min(flow.finisherPull, Math.max(0, d - 36)),
+          ((actor.y - e.y) / d) *
+            Math.min(flow.finisherPull, Math.max(0, d - 36)),
+        );
+        this.effect("tentacle", from.x, from.y, {
+          end: { x: actor.x, y: actor.y },
+          life: 0.2,
+        });
+      }
+    const range =
+        s.range *
+        (attack.finisher
+          ? 1.8
+          : attack.special
+            ? 1.55
+            : attack.dashCut
+              ? 1.15
+              : 1),
+      cone = attack.special ? Math.PI : s.cone;
+    const hits = this.targets(actor)
+      .filter(
+        (e) =>
+          distance(actor, e) <= range &&
+          angleDelta(Math.atan2(e.y - actor.y, e.x - actor.x), attack.angle) <
+            cone &&
+          this.visible(actor, e),
+      )
+      .sort(
+        (a, b) =>
+          distance(actor, a) - distance(actor, b) ||
+          String(a.id).localeCompare(String(b.id)),
+      );
+    const primary = hits.find((e) => e.id === attack.targetId) || hits[0];
+    const strike =
+      native && !attack.special && primary
+        ? actor.sawCombo.targetId === primary.id &&
+          this.t <= actor.sawCombo.until
+          ? actor.sawCombo.hits + 1
+          : 1
+        : 1;
+    if (native) attack.nativeStrike = strike;
     this.events.emit(
       "OnAttack",
-      { actor, organID: organ.id, sourceID: organ.id, attack },
+      {
+        actor,
+        organID: organ.id,
+        sourceID: organ.id,
+        attack,
+        attackInstanceId: attack.id,
+      },
       context,
     );
     if (organ.tags.includes("projectile")) {
-      const offsets = attack.special ? [-0.4, -0.2, 0, 0.2, 0.4] : [0];
-      for (const offset of offsets)
+      for (const offset of attack.special ? [-0.4, -0.2, 0, 0.2, 0.4] : [0])
         this.projectile(actor, organ.id, attack.angle + offset, {
           damage: s.damage * (attack.special ? 1.2 : 1) * scale,
           direct: scale === 1,
           context,
+          attackInstanceId: `${actor.id}:${attack.id}:shot:${offset}`,
         });
     } else {
-      const range = s.range * (attack.special ? 1.55 : 1),
-        cone = attack.special ? Math.PI : s.cone;
-      for (const enemy of this.targets(actor))
-        if (
-          distance(actor, enemy) <= range &&
-          angleDelta(
-            Math.atan2(enemy.y - actor.y, enemy.x - actor.x),
-            attack.angle,
-          ) < cone &&
-          this.visible(actor, enemy)
-        ) {
-          this.damage(
-            actor,
-            enemy,
-            s.damage * (attack.special ? 2.1 : 1) * scale,
-            {
-              organID: organ.id,
-              direct: scale === 1,
-              mutation: scale !== 1,
-              context,
-              knockback: attack.special ? 55 : s.knockback,
-              stagger: attack.special ? 0.45 : s.stagger,
-            },
-          );
-          if (!enemy.dead) {
+      let confirmed = false;
+      for (const enemy of hits) {
+        const damage =
+          s.damage *
+          (attack.special ? 2.1 : 1) *
+          (saw && strike === 3 ? s.thirdStrikeMultiplier : 1) *
+          (attack.finisher ? flow.finisherDamage : 1) *
+          scale;
+        const actual = this.damage(actor, enemy, damage, {
+          organID: organ.id,
+          direct: scale === 1,
+          mutation: scale !== 1,
+          context,
+          attackInstanceId:
+            scale === 1
+              ? `${actor.id}:${attack.id}`
+              : `${actor.id}:${attack.id}:copy:${++this.attackSerial}`,
+          knockback: attack.special
+            ? 55
+            : saw
+              ? strike === 3
+                ? 38
+                : 10
+              : s.knockback,
+          stagger: attack.special ? 0.45 : strike === 3 ? 0.28 : s.stagger,
+        });
+        if (enemy === primary && actual > 0) confirmed = true;
+        if (actual > 0 && !enemy.dead) {
+          if (!saw || attack.special || strike === 3)
             this.applyStatus(actor, enemy, "bleed", organ.id, context);
-            if (attack.special)
-              this.applyStatus(actor, enemy, "stun", organ.id, context);
-          }
+          if (attack.special)
+            this.applyStatus(actor, enemy, "stun", organ.id, context);
         }
+      }
+      if (native && !attack.special && confirmed && strike === 3)
+        actor.stats.thirdStrikes++;
+      if (native && !attack.special) {
+        actor.sawCombo = confirmed
+          ? {
+              targetId: primary.id,
+              hits: strike === 3 ? 0 : strike,
+              until: this.t + s.comboWindow,
+            }
+          : { targetId: null, hits: 0, until: 0 };
+        if (confirmed && strike === 3 && attack.rank >= 2) {
+          actor.finisherUntil = this.t + flow.finisherWindow;
+          if (actor.team === "player")
+            this.notify(
+              actor.specialAt <= this.t
+                ? "C · 회수 회전 준비"
+                : "강화 3타 적중 · C 충전 중",
+              "THIRD HIT CONFIRMED",
+            );
+        }
+      }
+      if (native && attack.special && attack.rank >= 3)
+        attack.endAt = Math.min(attack.endAt, this.t + flow.specialRecovery);
       this.effect("slash", actor.x, actor.y, {
         angle: attack.angle,
         range,
-        life: 0.21,
+        life: attack.finisher ? 0.38 : 0.21,
         special: attack.special,
         clone: scale !== 1,
+        strike,
+        dashCut: attack.dashCut,
+        finisher: attack.finisher,
       });
     }
   }
@@ -845,6 +1095,16 @@ export class Game {
     });
   }
   installEvents() {
+    this.events.on("OnSuccessfulEvade", ({ actor }) => {
+      const flow = ACTION_UPGRADES.ARM_SAW_FLOW;
+      if (actionRank(actor) >= 3 && (actor.timers.flowEvade || 0) <= this.t) {
+        actor.specialAt = Math.max(
+          this.t,
+          actor.specialAt - flow.evadeCooldownRefund,
+        );
+        actor.timers.flowEvade = this.t + flow.evadeRefundICD;
+      }
+    });
     this.events.on("OnDirectHit", (e) => {
       e.actor.lastDirectTarget = e.target.id;
       if (e.actor.organs.eye === "EYE_HUNTER") {
@@ -1064,6 +1324,7 @@ export class Game {
               context: p.context,
               stagger: 0.08,
               knockback: 8,
+              attackInstanceId: p.attackInstanceId,
             });
             if (p.poison)
               this.applyStatus(p.actor, target, "poison", p.organID, p.context);
@@ -1084,6 +1345,7 @@ export class Game {
                 organID: p.organID,
                 projectile: p,
                 sourceID: p.organID,
+                attackInstanceId: p.attackInstanceId,
               },
               p.context,
             );
@@ -1097,6 +1359,7 @@ export class Game {
         if (p.remaining <= 0 && !p.dead) {
           if (p.canReturn && !p.returning) {
             p.returning = true;
+            p.attackInstanceId = String(p.attackInstanceId) + ":return";
             p.outboundSpent = false;
             p.hits.clear();
             p.remaining = p.range;
@@ -1214,6 +1477,7 @@ export class Game {
   }
   telegraph(actor, kind, duration, range) {
     actor.telegraph = {
+      id: `hostile:${++this.attackSerial}`,
       kind,
       at: this.t + duration,
       born: this.t,
@@ -1230,6 +1494,7 @@ export class Game {
         speed: w.kind === "hook" ? 360 : 280,
         range: w.range,
         direct: false,
+        attackInstanceId: w.id,
       });
       const p = this.projectiles.at(-1);
       if (p) {
@@ -1244,6 +1509,7 @@ export class Game {
       for (let i = 0; i < 4; i++)
         this.hazards.push({
           owner: enemy,
+          attackInstanceId: `hazard:${++this.attackSerial}`,
           x: w.x + Math.cos((i * Math.PI) / 2) * 100,
           y: w.y + Math.sin((i * Math.PI) / 2) * 100,
           range: 78,
@@ -1274,7 +1540,7 @@ export class Game {
           this.player.y - start.y - u * dy,
         ) < 60
       )
-        this.damage(enemy, this.player, 28);
+        this.damage(enemy, this.player, 28, { attackInstanceId: w.id });
     } else if (
       distance(enemy, this.player) < w.range &&
       this.visible(enemy, this.player) &&
@@ -1284,7 +1550,9 @@ export class Game {
           w.angle,
         ) < 1.6)
     ) {
-      this.damage(enemy, this.player, ENEMIES[enemy.type].damage);
+      this.damage(enemy, this.player, ENEMIES[enemy.type].damage, {
+        attackInstanceId: w.id,
+      });
       this.effect("slash", enemy.x, enemy.y, {
         range: w.range,
         angle: w.angle,
@@ -1301,10 +1569,15 @@ export class Game {
       life: 0.45,
       enemy: true,
     });
-    if (distance(enemy, this.player) < 105) this.damage(enemy, this.player, 18);
+    if (distance(enemy, this.player) < 105)
+      this.damage(enemy, this.player, 18, {
+        attackInstanceId: `${enemy.id}:explode`,
+      });
     for (const other of this.enemies)
       if (other !== enemy && !other.dead && distance(enemy, other) < 105)
-        this.damage(enemy, other, 14);
+        this.damage(enemy, other, 14, {
+          attackInstanceId: `${enemy.id}:explode`,
+        });
   }
   hunterAI(h, dt) {
     const d = distance(h, this.player),
@@ -1357,6 +1630,7 @@ export class Game {
     const desired = h.arm.tags.includes("projectile") ? 250 : 85;
     h.state = d < desired + 75 ? "Attack" : "Chase";
     h.face = Math.atan2(this.player.y - h.y, this.player.x - h.x);
+    h.lastNonZeroFacing = h.face;
     h.lastMove = { x: Math.cos(h.face), y: Math.sin(h.face) };
     if (d > desired) this.follow(h, h.lastSeen, dt);
     if (h.arm.tags.includes("projectile") && d < 170)
@@ -1392,6 +1666,7 @@ export class Game {
         source.team === "hunter"
           ? "이전의 사냥꾼"
           : ENEMIES[source.type]?.name || "시장 폐장";
+      if (this.previewActions) return;
       try {
         saveDeath(this.storage, target, {
           runID: this.runID,
@@ -1447,7 +1722,11 @@ export class Game {
         ? ORGANS[reward.id].name
         : reward.kind === "mutation"
           ? MUTATIONS[reward.id].name
-          : "신체 강화",
+          : reward.kind === "action"
+            ? ACTION_UPGRADES[reward.id].ranks[
+                this.player.actionRanks[reward.id] - 1
+              ].name
+            : "신체 강화",
     );
     this.rewardChoices = [];
     this.checkLevel();
@@ -1482,18 +1761,19 @@ export class Game {
     return this.hunter;
   }
   tick(dt, input = {}) {
-    if (this.mode !== "playing") return;
+    if (this.mode !== "playing") return false;
     dt = Math.min(0.04, Math.max(0, dt));
     if (this.hitstop > 0) {
       this.hitstop -= dt;
-      return;
+      return false;
     }
     this.t += dt;
     const p = this.player,
       dir = direction(input);
     if (dir.x || dir.y) {
       p.lastMove = { ...dir };
-      if (!p.attack || this.t >= p.faceLockUntil)
+      p.lastNonZeroFacing = Math.atan2(dir.y, dir.x);
+      if (!p.attack || this.t >= p.attack.activeAt + p.arm.baseStats.active)
         p.face = Math.atan2(dir.y, dir.x);
       if (p.dashUntil <= this.t)
         this.move(p, dir.x * this.speed(p) * dt, dir.y * this.speed(p) * dt);
@@ -1508,7 +1788,9 @@ export class Game {
       if (!hazard.done && this.t >= hazard.at) {
         hazard.done = true;
         if (distance(hazard, p) < hazard.range)
-          this.damage(hazard.owner, p, 25);
+          this.damage(hazard.owner, p, 25, {
+            attackInstanceId: hazard.attackInstanceId,
+          });
         this.effect("blast", hazard.x, hazard.y, {
           range: hazard.range,
           enemy: true,
@@ -1584,10 +1866,12 @@ export class Game {
     if (this.notifications.length > 3)
       this.notifications = this.notifications.slice(-3);
     this.checkLevel();
+    return true;
   }
   snapshot() {
     return {
       mode: this.mode,
+      previewActions: this.previewActions,
       time: this.t,
       level: this.level,
       xp: this.xp,
@@ -1604,6 +1888,10 @@ export class Game {
         mutations: this.player.mutations.map((m) => ({ ...m })),
         attack: this.player.attack ? { ...this.player.attack } : null,
         stats: { ...this.player.stats },
+        actionRanks: { ...this.player.actionRanks },
+        sawCombo: { ...this.player.sawCombo },
+        finisherUntil: this.player.finisherUntil,
+        lastNonZeroFacing: this.player.lastNonZeroFacing,
       },
       enemies: this.enemies.map((e) => ({
         id: e.id,

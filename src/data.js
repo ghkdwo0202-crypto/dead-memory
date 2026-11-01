@@ -64,7 +64,7 @@ export const ORGANS = Object.fromEntries(
       "ARM_SAW",
       "톱날 팔",
       "arm",
-      "부채꼴 참격으로 출혈을 남깁니다. C: 넓은 회전 베기.",
+      "같은 적에게 Z 3타 적중 시 강화 베기와 출혈. C: 회전 베기.",
       ["melee", "bleed", "direct"],
       {
         damage: 22,
@@ -77,6 +77,11 @@ export const ORGANS = Object.fromEntries(
         stagger: 0.18,
         moveScale: 0.9,
         cancelFrom: 0.07,
+        bufferWindow: 0.24,
+        comboWindow: 1.3,
+        thirdStrikeMultiplier: 1.3,
+        comboWindups: [0.07, 0.09, 0.12],
+        comboRecoveries: [0.17, 0.19, 0.26],
       },
       ["bleed"],
       5,
@@ -380,7 +385,7 @@ export const STATUSES = {
 export const ENEMIES = {
   hungry: {
     name: "굶주린 것",
-    hp: 30,
+    hp: 55,
     speed: 65,
     damage: 9,
     xp: 4,
@@ -453,5 +458,58 @@ export function compatible(organID, mutationID) {
       m &&
       o.availableMutations.includes(m.id) &&
       m.compatibleTags.some((t) => o.tags.includes(t)),
+  );
+}
+
+// Native action growth is an organ upgrade, not a new mutation or activation key.
+export const ACTION_UPGRADES = {
+  ARM_SAW_FLOW: {
+    id: "ARM_SAW_FLOW",
+    name: "톱날 운용",
+    organID: "ARM_SAW",
+    maxRank: 3,
+    ranks: [
+      {
+        name: "돌파 베기",
+        description:
+          "X 뒤 Z를 사용하면 짧게 파고들며 벱니다. 추가 무적은 없습니다.",
+      },
+      {
+        name: "회수 회전",
+        description:
+          "같은 적에게 3타 적중 후 1.4초 안에 C: 주변 적을 끌어모아 회전 베기.",
+      },
+      {
+        name: "전투 순환",
+        description:
+          "실제 공격을 회피하면 C 쿨다운이 1.25초 감소. C 뒤 Z로 빠르게 복귀.",
+      },
+    ],
+    dashWindow: 0.75,
+    lungeDistance: 65,
+    finisherWindow: 1.4,
+    finisherPull: 50,
+    finisherDamage: 1.3,
+    evadeCooldownRefund: 1.25,
+    evadeRefundICD: 0.75,
+    specialRecovery: 0.08,
+  },
+};
+export function actionRank(actor, id = "ARM_SAW_FLOW") {
+  const definition = ACTION_UPGRADES[id];
+  return definition && actor.organs.arm === definition.organID
+    ? Math.min(definition.maxRank, Math.max(0, actor.actionRanks?.[id] || 0))
+    : 0;
+}
+export function sanitizeActionRanks(saved) {
+  return Object.fromEntries(
+    Object.values(ACTION_UPGRADES)
+      .filter(
+        (definition) =>
+          Number.isInteger(saved?.[definition.id]) &&
+          saved[definition.id] >= 0 &&
+          saved[definition.id] <= definition.maxRank,
+      )
+      .map((definition) => [definition.id, saved[definition.id]]),
   );
 }

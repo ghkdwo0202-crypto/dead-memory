@@ -1,5 +1,13 @@
 import { Game, loadDeaths } from "./core.js";
-import { ORGANS, MUTATIONS, SLOTS, SLOT_COLORS, CONFIG } from "./data.js";
+import {
+  ORGANS,
+  MUTATIONS,
+  SLOTS,
+  SLOT_COLORS,
+  CONFIG,
+  ACTION_UPGRADES,
+  actionRank,
+} from "./data.js";
 import { render } from "./render.js";
 import { createStorage } from "./storage.js";
 const $ = (id) => document.getElementById(id),
@@ -68,6 +76,7 @@ function setSelection(index) {
     b.tabIndex = i === selection ? 0 : -1;
   });
   buttons[selection].focus({ preventScroll: true });
+  buttons[selection].scrollIntoView({ block: "nearest", inline: "nearest" });
 }
 function modal(html, actions) {
   keys.clear();
@@ -87,8 +96,13 @@ function modal(html, actions) {
   });
   setSelection(0);
 }
-function start() {
-  game = new Game({ storage, forceHunter });
+function start(previewActions = false) {
+  game = new Game({ storage, forceHunter, previewActions });
+  if (previewActions)
+    game.notify(
+      "톱날 운용 · 완성형 미리보기",
+      "이 런은 사망 기록을 저장하지 않습니다.",
+    );
   screen = "play";
   shown = "";
   lastHUD = -1;
@@ -105,7 +119,7 @@ function title() {
   shown = "title";
   const records = loadDeaths(storage);
   modal(
-    `<span class="poster-tag">FRESH BODIES. BETTER PRICES.</span><h2 class="poster-title">MEAT<span>MARKET</span></h2><p>괴물을 죽이고, 몸을 바꾸고, 살아서 돌아오세요.<br>죽은 사냥꾼도 이곳에서는 상품입니다.</p><div class="menu-actions"><button data-menu class="primary" id="start">사냥터 입장 →</button><button data-menu id="force-hunter">이전 상품 테스트: ${records.length ? (forceHunter ? "켜짐 · 18초 후 출현" : "꺼짐") : "저장된 기록 없음"}</button><button data-menu id="open-help">조작 안내</button><button data-menu id="menu-sound">${sound ? "소리 끄기" : "소리 켜기"}</button></div><p class="menu-hint">↑ ↓ 선택 · ENTER 확인 / KEYBOARD ONLY / 5–8 MIN RUN</p>`,
+    `<span class="poster-tag">FRESH BODIES. BETTER PRICES.</span><h2 class="poster-title">MEAT<span>MARKET</span></h2><p>괴물을 죽이고, 몸을 바꾸고, 살아서 돌아오세요.<br>죽은 사냥꾼도 이곳에서는 상품입니다.</p><div class="menu-actions"><button data-menu class="primary" id="start">사냥터 입장 →</button><button data-menu id="force-hunter">이전 상품 테스트: ${records.length ? (forceHunter ? "켜짐 · 18초 후 출현" : "꺼짐") : "저장된 기록 없음"}</button><button data-menu id="open-help">조작 안내</button><button data-menu id="menu-sound">${sound ? "소리 끄기" : "소리 켜기"}</button><button data-menu id="action-preview">완성형 톱날 액션 미리보기</button></div><p class="menu-hint">↑ ↓ 선택 · ENTER 확인 / KEYBOARD ONLY / 5–8 MIN RUN</p>`,
     [
       start,
       () => {
@@ -117,6 +131,7 @@ function title() {
         toggleSound();
         title();
       },
+      () => start(true),
     ],
   );
 }
@@ -136,12 +151,17 @@ function pause() {
   screen = "pause";
   shown = "pause";
   modal(
-    '<div class="eyebrow">THE MARKET CAN WAIT.</div><h2>잠시 영업 중단.</h2><p>사냥과 성장 시간은 멈춰 있습니다.</p><div class="menu-actions"><button data-menu class="primary" id="resume">계속 사냥하기</button><button data-menu>조작 안내</button><button data-menu>소리 켜기 / 끄기</button></div><p class="menu-hint">↑ ↓ 선택 · ENTER 확인 · ESC 복귀</p>',
+    `<div class="eyebrow">THE MARKET CAN WAIT.</div><h2>잠시 영업 중단.</h2><p>사냥과 성장 시간은 멈춰 있습니다.</p><div class="menu-actions"><button data-menu class="primary" id="resume">계속 사냥하기</button><button data-menu>조작 안내</button><button data-menu>소리 켜기 / 끄기</button><button data-menu>공격 콘 표시: ${game.debugTargeting ? "켜짐" : "꺼짐"}</button></div><p class="menu-hint">↑ ↓ 선택 · ENTER 확인 · ESC 복귀</p>`,
     [
       resume,
       openHelp,
       () => {
         toggleSound();
+      },
+      () => {
+        game.debugTargeting = !game.debugTargeting;
+        game.mode = "playing";
+        pause();
       },
     ],
   );
@@ -154,7 +174,7 @@ function openHelp() {
   screen = "help";
   shown = "help";
   modal(
-    '<div class="eyebrow">A SHORT GUIDE TO STAYING ALIVE</div><h2>몸값을 올리는 방법.</h2><div class="help-grid"><span><kbd>↑ ↓ ← →</kbd> 8방향 이동</span><span><kbd>Z</kbd> 기본 공격 / 길게 누르기</span><span><kbd>X</kbd> 회피 / 2회 충전</span><span><kbd>C</kbd> 팔 기관 특수 공격</span><span><kbd>↑ ↓</kbd> 메뉴 선택</span><span><kbd>ENTER</kbd> 확인</span><span><kbd>ESC</kbd> 일시정지 / 취소</span><span>마우스 조준은 없습니다.</span></div><p>이동 방향을 기준으로 가까운 적에게 공격이 보정됩니다.<br>초록 경험치 조각을 주우면 기관과 변이를 선택합니다.<br>팔: 직접 공격 · 등: 자동 공격 · 심장과 눈: 빌드 시너지<br>주황 전조를 보고 X로 회피하세요. 5분 후 주인이 등장합니다.<br>사망한 빌드는 같은 브라우저에 최대 8개 저장됩니다.<br>플레이에는 PC 키보드가 필요합니다.</p><div class="menu-actions"><button data-menu class="primary" id="close-help">확인</button></div>',
+    '<div class="eyebrow">A SHORT GUIDE TO STAYING ALIVE</div><h2>몸값을 올리는 방법.</h2><div class="help-grid"><span><kbd>↑ ↓ ← →</kbd> 8방향 이동</span><span><kbd>Z</kbd> 기본 공격 / 길게 누르기</span><span><kbd>X</kbd> 회피 / 2회 충전</span><span><kbd>C</kbd> 팔 기관 특수 공격</span><span><kbd>↑ ↓</kbd> 메뉴 선택</span><span><kbd>ENTER</kbd> 확인</span><span><kbd>ESC</kbd> 일시정지 / 취소</span><span>마우스 조준은 없습니다.</span></div><p>이동 방향을 기준으로 가까운 적에게 공격이 보정됩니다.<br>초록 경험치 조각을 주우면 기관과 변이를 선택합니다.<br>팔: 직접 공격 · 등: 자동 공격 · 심장과 눈: 빌드 시너지<br>같은 적에게 Z 3타를 맞히면 강화 베기와 출혈이 발생합니다.<br>레벨업에서 톱날 운용을 선택하면 X→Z, 3타→C, C→Z가 열립니다.<br>주황 전조를 보고 X로 회피하세요. 5분 후 주인이 등장합니다.<br>사망한 빌드는 같은 브라우저에 최대 8개 저장됩니다.<br>플레이에는 PC 키보드가 필요합니다.</p><div class="menu-actions"><button data-menu class="primary" id="close-help">확인</button></div>',
     [
       () => {
         if (helpReturn === "title") title();
@@ -167,6 +187,19 @@ function openHelp() {
   );
 }
 function rewardInfo(reward) {
+  if (reward.kind === "action") {
+    const d = ACTION_UPGRADES[reward.id],
+      rank = game.player.actionRanks[d.id] || 0,
+      next = d.ranks[rank];
+    return {
+      title: next.name,
+      description: next.description,
+      label: `톱날 운용 ${rank + 1}/${d.maxRank} / 액션 강화`,
+      icon: "↯",
+      color: "#f3ba82",
+      note: "공격 동작 변화 · 기관 획득 대신 선택",
+    };
+  }
   if (reward.kind === "organ") {
     const o = ORGANS[reward.id],
       old = game.player.organs[o.slot];
@@ -223,6 +256,11 @@ function showRewards() {
     game.rewardChoices.map((_, i) => () => {
       if (game.choose(i)) {
         shown = "";
+        if (game.mode === "levelup" || game.mode === "inherit") {
+          showRewards();
+          updateHUD();
+          return;
+        }
         screen = "play";
         $("overlay").classList.add("hidden");
         keys.clear();
@@ -244,8 +282,8 @@ function showResult() {
     mutations =
       p.mutations.map((m) => MUTATIONS[m.id].name).join(" · ") || "없음";
   modal(
-    `<div class="eyebrow">${won ? "PAYMENT AUTHORIZED" : "LOT CLOSED / " + (game.saved ? "BUILD ARCHIVED" : "SAVE FAILED")}</div><h2>${won ? "살아서 돌아온 <em>상품.</em>" : "다음 주인을 <em>기다립니다.</em>"}</h2><p>${won ? "도축장 주인을 처치했습니다. 이번 사냥의 수익은 당신 것입니다." : `${game.cause}에게 쓰러졌습니다. 당신이 만든 빌드가 다음 사냥터에 남습니다.`}</p><div class="result-stats"><span><b>${timeLabel(game.t)}</b>생존 시간</span><span><b>${game.kills}</b>처치</span><span><b>${game.level}</b>신체 레벨</span></div><p class="result-build">${organs}<br>변이: ${mutations}<br>피해 / 직접 ${Math.round(p.stats.direct)} · 자동 ${Math.round(p.stats.auto)} · 변이 ${Math.round(p.stats.mutation)}<br>${won ? "탈출한 빌드는 사망 기록에 추가되지 않습니다." : !game.saved ? "기록을 저장하지 못했습니다." : storage.persistent ? "추적자 기록을 브라우저에 저장했습니다." : "저장이 차단되어 현재 탭에서만 기록됩니다."}</p><div class="menu-actions"><button data-menu class="primary" id="restart">다시 사냥하기 →</button><button data-menu id="return-title">시장 입구로</button></div>`,
-    [start, title],
+    `<div class="eyebrow">${won ? "PAYMENT AUTHORIZED" : game.previewActions ? "ACTION PREVIEW / NOT ARCHIVED" : "LOT CLOSED / " + (game.saved ? "BUILD ARCHIVED" : "SAVE FAILED")}</div><h2>${won ? "살아서 돌아온 <em>상품.</em>" : "다음 주인을 <em>기다립니다.</em>"}</h2><p>${won ? "도축장 주인을 처치했습니다. 이번 사냥의 수익은 당신 것입니다." : game.previewActions ? "미리보기가 끝났습니다. 일반 사냥에서는 톱날 운용을 성장 보상으로 선택하세요." : `${game.cause}에게 쓰러졌습니다. 당신이 만든 빌드가 다음 사냥터에 남습니다.`}</p><div class="result-stats"><span><b>${timeLabel(game.t)}</b>생존 시간</span><span><b>${game.kills}</b>처치</span><span><b>${game.level}</b>신체 레벨</span></div><p class="result-build">${organs}<br>변이: ${mutations}<br>피해 / 직접 ${Math.round(p.stats.direct)} · 자동 ${Math.round(p.stats.auto)} · 변이 ${Math.round(p.stats.mutation)}<br>${won ? "탈출한 빌드는 사망 기록에 추가되지 않습니다." : game.previewActions ? "미리보기 런은 사망 기록을 저장하지 않습니다." : !game.saved ? "기록을 저장하지 못했습니다." : storage.persistent ? "추적자 기록을 브라우저에 저장했습니다." : "저장이 차단되어 현재 탭에서만 기록됩니다."}</p><div class="menu-actions"><button data-menu class="primary" id="restart">다시 사냥하기 →</button><button data-menu id="return-title">시장 입구로</button></div>`,
+    [() => start(game.previewActions), title],
   );
 }
 function syncScreen() {
@@ -279,6 +317,42 @@ function updateHUD() {
       return `<div class="organ" style="--organ-color:${SLOT_COLORS[slot]}"><div class="organ-icon">${icons[id] || "+"}</div><div><div class="organ-name">${o?.name || "이식되지 않음"}</div><div class="organ-sub">${slot.toUpperCase()} / ${o ? "GRAFTED" : "VACANT"}</div></div><span class="organ-slot">${label}</span></div>`;
     })
     .join("");
+  const flow = ACTION_UPGRADES.ARM_SAW_FLOW,
+    rank = actionRank(p),
+    combo = game.t <= p.sawCombo.until ? p.sawCombo.hits : 0;
+  let cue = combo
+    ? `같은 적 연격 ${combo}/3 · 다음 Z 적중을 노리세요.`
+    : "같은 적에게 Z 세 번 적중하면 강화 3타와 출혈.";
+  if (
+    rank >= 1 &&
+    game.t - p.lastDashAt <= flow.dashWindow &&
+    p.dashLinkUsed !== p.dashSerial
+  )
+    cue = "Z · 돌파 베기 준비 — 짧게 파고듭니다.";
+  if (rank >= 2 && p.finisherUntil > game.t)
+    cue =
+      p.specialAt <= game.t
+        ? "C · 회수 회전 준비! 주변 적을 끌어모아 마무리."
+        : "연격 마무리 준비 · C 쿨다운을 확인하세요.";
+  $("action-cue").textContent =
+    p.organs.arm === "ARM_SAW"
+      ? cue
+      : "가시 팔 · 방향을 잡고 Z, 포위되기 전에 C 부채꼴 사격.";
+  $("action-rank").textContent =
+    p.organs.arm === "ARM_SAW" ? `톱날 운용 ${rank}/3` : "가시 발사 팔";
+  $("action-stages").innerHTML = flow.ranks
+    .map(
+      (r, i) =>
+        `<span class="action-stage ${rank > i ? "unlocked" : ""}"><b>${i + 1}</b>${r.name}</span>`,
+    )
+    .join("");
+  $("action-window").style.width =
+    p.finisherUntil > game.t
+      ? Math.min(
+          100,
+          ((p.finisherUntil - game.t) / flow.finisherWindow) * 100,
+        ) + "%"
+      : "0%";
   $("mutation-count").textContent = String(p.mutations.length).padStart(2, "0");
   $("mutations").innerHTML = p.mutations.length
     ? p.mutations
@@ -388,7 +462,7 @@ function frame(now) {
   const dt = Math.min(0.04, (now - last) / 1000 || 0);
   last = now;
   if (game?.mode === "playing" && screen === "play") {
-    game.tick(dt, {
+    const inputProcessed = game.tick(dt, {
       up: keys.has("ArrowUp"),
       down: keys.has("ArrowDown"),
       left: keys.has("ArrowLeft"),
@@ -397,7 +471,7 @@ function frame(now) {
       dashPressed: pressed.dash,
       specialPressed: pressed.special,
     });
-    pressed = { dash: false, special: false };
+    if (inputProcessed) pressed = { dash: false, special: false };
     if (game.t - lastHUD > 0.08 || game.mode !== "playing") {
       updateHUD();
       lastHUD = game.t;

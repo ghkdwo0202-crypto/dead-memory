@@ -1,12 +1,12 @@
 {
   "name": "meat-market",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "scripts": {
     "start": "node scripts/serve.mjs",
     "build:pages": "node scripts/build-pages.mjs",
-    "test": "node tests/combat.test.js",
+    "test": "node tests/combat.test.js && node tests/action-axis.test.js",
     "check": "node --check src/game.js && node --check src/core.js && node --check src/data.js && node --check src/render.js && node --check src/navigation.js && node --check src/storage.js",
     "test:browser": "node scripts/browser-smoke.mjs",
     "build:standalone": "node scripts/build-standalone.mjs",

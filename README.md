@@ -1,6 +1,16 @@
 # MEAT MARKET
 
-괴물을 죽이고 신체 기관을 이식하는 **키보드 전용 2D 액션 서바이버 로그라이크** 프로토타입입니다. 기존 DEAD MEMORY의 JavaScript + Canvas 엔진과 배포 구조를 유지하고 새 [개발 명세 v1.1](docs/MEAT-MARKET-SPECIFICATION.md)에 맞춰 전환했습니다.
+괴물을 죽이고 신체 기관을 이식하는 **키보드 전용 2D 액션 서바이버 로그라이크** 프로토타입입니다. 기존 DEAD MEMORY의 JavaScript + Canvas 엔진과 배포 구조를 유지하고 초기 [개발 명세 v1.1](docs/MEAT-MARKET-SPECIFICATION.md)에 맞춰 전환했습니다. 이후 확장의 기준은 [Issue #2](https://github.com/ghkdwo0202-crypto/dead-memory/issues/2)와 [PR #1의 개발 명세 v1.3](docs/MEAT-MARKET-BUILD-SPEC-v1.3.md)입니다. 현재 구현과 v1.3의 차이 및 단계별 계획은 [Phase 0 보고](docs/PHASE0-REVIEW.md)에 정리했습니다.
+
+## v0.3 — 빌드를 찍을수록 달라지는 톱날 액션
+
+기본 Z는 **같은 적에게 3타 적중**해야 강화 베기와 출혈이 나옵니다. 레벨업에서 **톱날 운용**을 선택하면 다음 동작이 차례로 열립니다.
+
+1. **돌파 베기:** X 뒤 Z로 짧게 파고들며 공격. 추가 무적은 없습니다.
+2. **회수 회전:** 3타 적중 뒤 1.4초 안에 C를 사용하면 주변 적을 끌어모아 마무리합니다.
+3. **전투 순환:** 실제 공격 회피 시 C 쿨다운 감소, C 뒤 Z로 빠르게 복귀합니다.
+
+바로 확인하려면 시작 화면에서 **완성형 톱날 액션 미리보기**를 선택하세요. 미리보기는 사망 기록을 저장하지 않습니다. 일반 런은 랭크 0에서 시작합니다. [이번 단계 구현·검증·남은 문제](docs/PHASE1-ACTION-AXIS.md).
 
 ## 다운로드해서 바로 플레이
 
@@ -45,7 +55,7 @@ npm start
 같은 PC의 브라우저에서 `http://localhost:3000`을 엽니다. 다른 포트는 `PORT=3001 npm start`로 지정합니다.
 
 ```sh
-npm test             # 필수 22개 케이스를 포함한 40개 테스트
+npm test             # 기존 40개 + 액션 축 19개 테스트
 npm run check        # JavaScript 구문 검사
 npm run build:pages  # .local/pages/ 정적 산출물 생성
 ```

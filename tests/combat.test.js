@@ -487,10 +487,14 @@ test("return projectile travels outbound before hitting the same target on its r
 test("five-minute populated simulation respects entity caps and reaches a boss", () => {
   const game = new Game({ storage: store(), random: () => 0.35 });
   game.player.maxHP = game.player.hp = 100000;
-  for (let i = 0; i < 15100; i++) {
+  for (let i = 0; i < 25000 && game.t < CONFIG.bossTime + 0.2; i++) {
     game.tick(0.02, { attack: true, specialPressed: i % 300 === 0 });
     if (game.mode === "levelup") game.choose(0);
   }
+  assert.ok(
+    game.t >= CONFIG.bossTime,
+    "five simulated minutes must actually elapse despite hitstop",
+  );
   assert.ok(game.bossSpawned);
   assert.ok(game.boss);
   assert.ok(game.enemies.length <= CONFIG.maxEnemies);

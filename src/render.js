@@ -412,6 +412,23 @@ export function render(ctx, game, realTime = 0) {
     ctx.fillText("COLD STORAGE", o.x + 10, o.y + o.h - 20);
   }
   if (game) {
+    if (game.debugTargeting && game.player.arm) {
+      const a = game.player.face,
+        rule = game.player.arm.targetingRule;
+      ctx.save();
+      ctx.translate(game.player.x, game.player.y);
+      ctx.rotate(a);
+      ctx.fillStyle = "#d7d59310";
+      ctx.strokeStyle = "#d7d59366";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.arc(0, 0, rule.distance, -rule.assistAngle, rule.assistAngle);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
     for (const orb of game.orbs) {
       const pulse = 2 + Math.sin(t * 5 + orb.x);
       circle(ctx, orb.x, orb.y, 8, "#cad47910");
@@ -540,15 +557,43 @@ export function render(ctx, game, realTime = 0) {
       if (e.type === "slash") {
         ctx.translate(e.x, e.y);
         ctx.rotate(e.angle);
-        ctx.strokeStyle = e.enemy ? "#e9a177" : e.clone ? "#c2cb8d" : "#f1d49a";
-        ctx.lineWidth = e.special ? 16 : 8;
+        ctx.strokeStyle = e.finisher
+          ? "#ffc992"
+          : e.dashCut
+            ? "#b7e2c8"
+            : e.strike === 3
+              ? "#ffb87d"
+              : e.enemy
+                ? "#e9a177"
+                : e.clone
+                  ? "#c2cb8d"
+                  : "#f1d49a";
+        ctx.lineWidth = e.finisher
+          ? 20
+          : e.strike === 3
+            ? 13
+            : e.special
+              ? 16
+              : 8;
         ctx.beginPath();
         ctx.arc(
           0,
           0,
           e.range * (0.55 + q * 0.4),
-          e.special ? -2.3 : -1.15,
-          e.special ? 2.3 : 1.15,
+          e.finisher
+            ? 0
+            : e.special
+              ? -2.3
+              : e.strike === 2
+                ? 0.9 - q * 2.1
+                : -1.6 + q * 2.1,
+          e.finisher
+            ? Math.PI * 2
+            : e.special
+              ? 2.3
+              : e.strike === 2
+                ? 1.6 - q * 2.1
+                : -0.9 + q * 2.1,
         );
         ctx.stroke();
         for (let i = 0; i < 5; i++) {

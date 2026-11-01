@@ -798,3 +798,80 @@ footer i {
     letter-spacing: 1px;
   }
 }
+
+.action-route {
+  margin-top: 12px;
+  padding: 15px 19px;
+  background: #24251b;
+  border: 1px solid #4d5035;
+}
+.action-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+}
+.action-heading > span {
+  font: 8px monospace;
+  letter-spacing: 1.2px;
+  color: var(--dim);
+}
+.action-heading b {
+  color: #dfc18d;
+  font-weight: 400;
+}
+.action-route p {
+  font-size: 11px;
+  color: #d8d1aa;
+  margin: 12px 0 10px;
+  line-height: 1.7;
+}
+#action-stages {
+  display: flex;
+  gap: 16px;
+}
+.action-stage {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  color: #7f896c;
+  font-size: 9px;
+}
+.action-stage b {
+  font: 9px monospace;
+  border: 1px solid #515b3f;
+  padding: 2px 4px;
+}
+.action-stage.unlocked {
+  color: #edc58f;
+}
+.action-stage.unlocked b {
+  border-color: #ad8b59;
+  background: #5c462b44;
+}
+.action-window {
+  height: 2px;
+  background: #383e2b;
+}
+.action-window i {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: #f0c27b;
+}
+@media (max-width: 780px) {
+  .action-heading {
+    align-items: start;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .action-route {
+    padding: 12px 14px;
+  }
+  #action-stages {
+    gap: 14px;
+  }
+  .action-route p {
+    font-size: 10px;
+  }
+}
