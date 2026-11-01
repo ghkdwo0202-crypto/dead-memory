@@ -18,6 +18,17 @@
 
 `npm run build:standalone`으로 `.local/standalone/MEAT-MARKET.html`을 만들 수 있습니다. 이 파일 하나를 PC로 옮겨 Chrome 또는 Edge로 열면 됩니다. HTML 안에 코드와 스타일이 모두 포함되어 있으므로 플레이할 때 Node.js, 개발 서버, 인터넷 연결이 필요하지 않습니다. `npm run build:download`는 같은 파일과 실행 안내를 ZIP으로 묶어 `downloads/MEAT-MARKET.zip`을 갱신합니다.
 
+## 액션 경로 연구실 (v2.0 단계 C)
+
+입구에서 **액션 경로 연구실 · T0–T3** → 경로 → 성장 단계를 방향키·Enter로 선택하세요. ESC 일시정지 메뉴에서 연구실로 돌아올 수 있습니다. 고정 표적과 완성 장비로 비교하며 사망 기록은 저장하지 않습니다.
+
+- PATH_01: 270° 3타 → 회피 반원 베기·칼날 가속 → 전후방 베기·당기기 3연회전
+- PATH_06: 정지 Z 충전 후 놓아 발사 → X 충전량 보존 → 완충 레일탄·C 후속탄
+- PATH_17: X 직후 Z 잔상 → 실제 회피 성공 추가 잔상 → 지연 잔상·C 연결선 소비
+- PATH_25: Z 소환체 돌진 → 취약한 공격 유지·집중 명령 → 양방향 협공·합동 처형
+
+일반 사냥에서도 장비 조건에 맞는 경로와 T1/T2/T3를 각각 보상으로 선택합니다. 장비를 바꾸면 경로가 휴면하며 지연 효과와 소환체를 정리합니다. 나머지 28개 경로는 계획 데이터만 있으며 플레이 보상에는 나오지 않습니다. 세부 비교와 단계별 결과: [ActionMorph 감사](docs/ACTION-MORPH-AUDIT.md), [단계 보고](docs/ACTION-MORPH-PROGRESS.md).
+
 ## 플레이
 
 GitHub Pages 배포가 완료되면 **https://ghkdwo0202-crypto.github.io/dead-memory/** 에서 설치 없이 플레이합니다. 저장소/주소는 유지하고 게임 이름과 내용만 변경했습니다. PC 키보드가 필요합니다.
@@ -35,7 +46,7 @@ GitHub Pages 배포가 완료되면 **https://ghkdwo0202-crypto.github.io/dead-m
 
 ## 주요 시스템
 
-- 팔 2종, 등 자동 기관 3종, 심장 2종, 눈 2종과 부위별 외형
+- 실제 사용 기관 12종: 기존 9종 + 새끼 등·기생 심장·약점의 눈
 - 변이 12종, 호환성 검사, 시너지 보상, 출혈/독/감전/둔화/기절
 - 수동 공격 준비/활성/회복, 자동 방향 보정, 입력 버퍼, 회피 취소와 2충전 무적 회피
 - 몬스터 4종, 시간 기반 웨이브, 정예 갈고리와 보스 네 패턴
@@ -55,7 +66,7 @@ npm start
 같은 PC의 브라우저에서 `http://localhost:3000`을 엽니다. 다른 포트는 `PORT=3001 npm start`로 지정합니다.
 
 ```sh
-npm test             # 기존 40개 + 액션 축 19개 테스트
+npm test             # 기존 59개 + ActionMorph 23개 테스트
 npm run check        # JavaScript 구문 검사
 npm run build:pages  # .local/pages/ 정적 산출물 생성
 ```

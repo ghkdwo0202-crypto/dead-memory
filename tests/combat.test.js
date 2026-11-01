@@ -290,8 +290,9 @@ test("22 · hunter attacks telegraph at least .42s and can be evaded", () => {
   game.updateActor(h, 0.03);
   assert.equal(p.hp, 120);
 });
-test("all nine organ resources and twelve mutation resources provide required fields", () => {
-  assert.equal(Object.keys(ORGANS).length, 9);
+test("organ registry resolves 22 IDs, exposes 12 implemented organs and retains 12 legacy mutations", () => {
+  assert.equal(Object.keys(ORGANS).length,22);
+  assert.equal(Object.values(ORGANS).filter(o=>o.implemented!==false).length,12);
   assert.equal(Object.keys(MUTATIONS).length, 12);
   for (const o of Object.values(ORGANS))
     for (const k of [

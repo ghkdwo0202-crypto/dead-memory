@@ -455,54 +455,40 @@ export function render(ctx, game, realTime = 0) {
         "#f0bc83",
       );
     }
-    for (const enemy of game.enemies) {
-      const a = enemy.telegraph;
-      if (!a) continue;
-      const progress = Math.min(1, (t - a.born) / (a.at - a.born));
+    for (const e of game.morph.entities) {
       ctx.save();
-      ctx.translate(enemy.x, enemy.y);
-      ctx.rotate(a.angle);
-      ctx.strokeStyle = "#f4ad76";
-      ctx.fillStyle = "#e9a55b22";
-      ctx.lineWidth = 2;
-      if (["hook", "spit", "charge"].includes(a.kind)) {
-        ctx.fillRect(
-          0,
-          -(a.kind === "charge" ? 36 : 12),
-          a.range,
-          a.kind === "charge" ? 72 : 24,
-        );
-        ctx.setLineDash([8, 8]);
+      ctx.globalAlpha = e.kind === "echo" ? 0.45 : 0.95;
+      circle(
+        ctx,
+        e.x,
+        e.y,
+        e.kind === "echo" ? 16 : 10,
+        e.kind === "echo" ? "#9bd4d344" : "#8dada1",
+        "#d6eadd",
+      );
+      if (e.kind === "echo") {
+        ctx.strokeStyle = "#c7eeef";
         ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.lineTo(a.range * progress, 0);
+        ctx.moveTo(e.x, e.y);
+        ctx.lineTo(e.x + Math.cos(e.angle) * 30, e.y + Math.sin(e.angle) * 30);
         ctx.stroke();
-        ctx.setLineDash([]);
-        poly(
-          ctx,
-          [
-            [a.range - 10, -8],
-            [a.range, 0],
-            [a.range - 10, 8],
-          ],
-          "#f3bd83",
-        );
       } else {
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.arc(
-          0,
-          0,
-          a.range,
-          a.kind === "explode" ? -Math.PI : -1.6,
-          a.kind === "explode" ? Math.PI : 1.6,
-        );
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-        circle(ctx, 0, 0, enemy.radius + 9, null, "#ffd28e");
+        ctx.fillStyle = "#8bd59b";
+        ctx.fillRect(e.x - 10, e.y - 16, (20 * e.hp) / e.maxHP, 3);
       }
       ctx.restore();
+    }
+    if (p.attack?.kind === "charge") {
+      const q = p.attack.chargeAmount / 0.9;
+      circle(ctx, p.x, p.y, 22 + q * 28, null, "#b5e9db");
+      ctx.strokeStyle = "#b5e9db";
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+      ctx.lineTo(
+        p.x + Math.cos(p.face) * (70 + q * 100),
+        p.y + Math.sin(p.face) * (70 + q * 100),
+      );
+      ctx.stroke();
     }
     for (const actor of [...game.enemies, game.player].sort(
       (a, b) => a.y - b.y,
@@ -554,7 +540,32 @@ export function render(ctx, game, realTime = 0) {
       ctx.save();
       ctx.globalAlpha = 1 - q;
       ctx.lineWidth = 2;
-      if (e.type === "slash") {
+      if (e.type === "morph-ray" || e.type === "morph-line") {
+        ctx.strokeStyle =
+          e.type === "morph-line" ? "#94d7d9" : e.rail ? "#f1fbca" : "#b5e9db";
+        ctx.lineWidth = (e.width || 12) * (1 - q * 0.7);
+        ctx.beginPath();
+        ctx.moveTo(e.x, e.y);
+        ctx.lineTo(e.end.x, e.end.y);
+        ctx.stroke();
+      } else if (e.type === "morph-arc") {
+        ctx.strokeStyle = e.echo ? "#91ced6" : "#f3d2a0";
+        ctx.lineWidth = e.dual ? 9 : 13;
+        ctx.beginPath();
+        ctx.arc(
+          e.x,
+          e.y,
+          e.range * (0.7 + q * 0.3),
+          e.angle - e.cone / 2,
+          e.angle + e.cone / 2,
+        );
+        ctx.stroke();
+        if (e.dual) {
+          ctx.beginPath();
+          ctx.arc(e.x, e.y, e.range * 0.65, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      } else if (e.type === "slash") {
         ctx.translate(e.x, e.y);
         ctx.rotate(e.angle);
         ctx.strokeStyle = e.finisher
@@ -654,6 +665,55 @@ export function render(ctx, game, realTime = 0) {
             3,
           );
         }
+      }
+      ctx.restore();
+    }
+    for (const enemy of game.enemies) {
+      const a = enemy.telegraph;
+      if (!a) continue;
+      const progress = Math.min(1, (t - a.born) / (a.at - a.born));
+      ctx.save();
+      ctx.translate(enemy.x, enemy.y);
+      ctx.rotate(a.angle);
+      ctx.strokeStyle = "#f4ad76";
+      ctx.fillStyle = "#e9a55b22";
+      ctx.lineWidth = 2;
+      if (["hook", "spit", "charge"].includes(a.kind)) {
+        ctx.fillRect(
+          0,
+          -(a.kind === "charge" ? 36 : 12),
+          a.range,
+          a.kind === "charge" ? 72 : 24,
+        );
+        ctx.setLineDash([8, 8]);
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(a.range * progress, 0);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        poly(
+          ctx,
+          [
+            [a.range - 10, -8],
+            [a.range, 0],
+            [a.range - 10, 8],
+          ],
+          "#f3bd83",
+        );
+      } else {
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.arc(
+          0,
+          0,
+          a.range,
+          a.kind === "explode" ? -Math.PI : -1.6,
+          a.kind === "explode" ? Math.PI : 1.6,
+        );
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        circle(ctx, 0, 0, enemy.radius + 9, null, "#ffd28e");
       }
       ctx.restore();
     }

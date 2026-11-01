@@ -513,3 +513,97 @@ export function sanitizeActionRanks(saved) {
       .map((definition) => [definition.id, saved[definition.id]]),
   );
 }
+
+// Planned catalogue entries resolve references but cannot enter rewards or equipment.
+const plannedOrgans = [
+  [
+    "ARM_CRUSH",
+    "골격 분쇄 팔",
+    "arm",
+    ["melee", "direct"],
+    { damage: 42, range: 90 },
+    "crush",
+  ],
+  [
+    "ARM_WHIP",
+    "채찍 촉수 팔",
+    "arm",
+    ["melee", "direct"],
+    { damage: 22, range: 150 },
+    "whip",
+  ],
+  [
+    "BACK_POISON",
+    "독낭 분사기",
+    "back",
+    ["auto", "poison", "area"],
+    { damage: 5, range: 180 },
+    "poison",
+  ],
+  [
+    "BACK_BROOD",
+    "번식 기관",
+    "back",
+    ["auto", "summon"],
+    { damage: 7, range: 440 },
+    "brood",
+  ],
+  [
+    "BACK_ELECTRIC",
+    "전기 기관",
+    "back",
+    ["auto", "shock"],
+    { damage: 12, range: 250 },
+    "electric",
+  ],
+  ["HEART_COAGULATE", "응고 심장", "heart", ["passive", "bleed"], {}, "clot"],
+  [
+    "HEART_OVERCHARGE",
+    "과충전 심장",
+    "heart",
+    ["passive", "shock"],
+    {},
+    "overcharge",
+  ],
+  ["HEART_PARASITE", "기생 심장", "heart", ["passive", "auto"], {}, "parasite"],
+  ["HEART_UNDYING", "불사의 심장", "heart", ["passive", "risk"], {}, "undying"],
+  ["EYE_WEAK", "약점의 눈", "eye", ["passive", "direct"], {}, "weak"],
+  ["EYE_SWARM", "군집의 눈", "eye", ["passive", "auto"], {}, "swarm"],
+  ["EYE_INFECTION", "전염의 눈", "eye", ["passive", "status"], {}, "infection"],
+  ["EYE_PREDATOR", "포식자의 눈", "eye", ["passive", "target"], {}, "predator"],
+];
+for (const [id, name, slot, tags, stats, visual] of plannedOrgans) {
+  const implemented = ["BACK_BROOD", "HEART_PARASITE", "EYE_WEAK"].includes(id);
+  const description =
+    id === "BACK_BROOD"
+      ? "5초마다 새끼 소환, 최대 3마리. 근접 공격 피해 7."
+      : id === "HEART_PARASITE"
+        ? "자동 기관 적중마다 C 쿨다운 0.15초 감소, 초당 최대 0.6초."
+        : id === "EYE_WEAK"
+          ? "정예·보스에게 직접 공격 피해 +20%."
+          : "후속 단계의 계획 기관입니다. 현재 장착할 수 없습니다.";
+  ORGANS[id] = {
+    ...organ(
+      id,
+      name,
+      slot,
+      description,
+      tags,
+      stats,
+      implemented ? [visual] : [],
+      id === "BACK_BROOD" ? 5 : 0,
+      id === "BACK_BROOD" ? ["MUT07", "MUT10"] : [],
+      visual,
+    ),
+    implemented,
+  };
+}
+export const MORPH_LIMITS = {
+  echoes: 3,
+  summons: 3,
+  fields: 3,
+  mines: 5,
+  logs: 120,
+  eventsPerTick: 32,
+  delayed: 24,
+};

@@ -1,3 +1,4 @@
+import { ACTION_PATHS, activeMorphTier } from "./action-paths.js";
 import { Game, loadDeaths } from "./core.js";
 import {
   ORGANS,
@@ -23,6 +24,9 @@ const icons = {
   HEART_BLAST: "◈",
   EYE_BLOOD: "◉",
   EYE_HUNTER: "⊙",
+  BACK_BROOD: "♟",
+  HEART_PARASITE: "♡",
+  EYE_WEAK: "⌖",
 };
 const storage = createStorage(() => localStorage);
 let game = null,
@@ -96,11 +100,19 @@ function modal(html, actions) {
   });
   setSelection(0);
 }
-function start(previewActions = false) {
-  game = new Game({ storage, forceHunter, previewActions });
+function start(previewActions = false, previewPath = null, previewTier = 0) {
+  game = new Game({
+    storage,
+    forceHunter,
+    previewActions,
+    previewPath,
+    previewTier,
+  });
   if (previewActions)
     game.notify(
-      "톱날 운용 · 완성형 미리보기",
+      previewPath
+        ? `${ACTION_PATHS[previewPath].name} · T${previewTier} 연구실`
+        : "톱날 운용 · 완성형 미리보기",
       "이 런은 사망 기록을 저장하지 않습니다.",
     );
   screen = "play";
@@ -119,7 +131,7 @@ function title() {
   shown = "title";
   const records = loadDeaths(storage);
   modal(
-    `<span class="poster-tag">FRESH BODIES. BETTER PRICES.</span><h2 class="poster-title">MEAT<span>MARKET</span></h2><p>괴물을 죽이고, 몸을 바꾸고, 살아서 돌아오세요.<br>죽은 사냥꾼도 이곳에서는 상품입니다.</p><div class="menu-actions"><button data-menu class="primary" id="start">사냥터 입장 →</button><button data-menu id="force-hunter">이전 상품 테스트: ${records.length ? (forceHunter ? "켜짐 · 18초 후 출현" : "꺼짐") : "저장된 기록 없음"}</button><button data-menu id="open-help">조작 안내</button><button data-menu id="menu-sound">${sound ? "소리 끄기" : "소리 켜기"}</button><button data-menu id="action-preview">완성형 톱날 액션 미리보기</button></div><p class="menu-hint">↑ ↓ 선택 · ENTER 확인 / KEYBOARD ONLY / 5–8 MIN RUN</p>`,
+    `<span class="poster-tag">FRESH BODIES. BETTER PRICES.</span><h2 class="poster-title">MEAT<span>MARKET</span></h2><p>괴물을 죽이고, 몸을 바꾸고, 살아서 돌아오세요.<br>죽은 사냥꾼도 이곳에서는 상품입니다.</p><div class="menu-actions"><button data-menu class="primary" id="start">사냥터 입장 →</button><button data-menu id="force-hunter">이전 상품 테스트: ${records.length ? (forceHunter ? "켜짐 · 18초 후 출현" : "꺼짐") : "저장된 기록 없음"}</button><button data-menu id="open-help">조작 안내</button><button data-menu id="menu-sound">${sound ? "소리 끄기" : "소리 켜기"}</button><button data-menu id="path-lab">액션 경로 연구실 · T0–T3</button><button data-menu id="action-preview">완성형 톱날 액션 미리보기</button></div><p class="menu-hint">↑ ↓ 선택 · ENTER 확인 / KEYBOARD ONLY / 5–8 MIN RUN</p>`,
     [
       start,
       () => {
@@ -131,8 +143,26 @@ function title() {
         toggleSound();
         title();
       },
+      pathLab,
       () => start(true),
     ],
+  );
+}
+function pathLab() {
+  if (game) game.mode = "paused";
+  screen = "path-lab";
+  const paths = Object.values(ACTION_PATHS).filter((p) => p.implemented);
+  modal(
+    `<h2>액션 경로 연구실</h2><p>같은 장비로 T0 → T3의 조작과 궤적을 비교하세요. 나머지 28개 경로는 개발 예정입니다.</p><div class="menu-actions">${paths.map((p) => `<button data-menu>${p.id} · ${p.name}</button>`).join("")}<button data-menu>시장 입구로</button></div>`,
+    [...paths.map((p) => () => pathTiers(p.id)), title],
+  );
+}
+function pathTiers(id) {
+  screen = "path-tier";
+  const p = ACTION_PATHS[id];
+  modal(
+    `<h2>${p.name}</h2><p>↑ ↓ 선택 · ENTER 입장 · ESC 복귀<br>방향키 이동 / Z 공격 / X 회피 / C 특수 공격<br>PATH_06은 Z를 누르고 정지해 충전한 뒤 놓으세요.</p><div class="menu-actions">${[0, 1, 2, 3].map((t) => `<button data-menu>T${t} · ${t ? p["tier" + t].preview : "기본 동작 · 경로 효과 없음"}</button>`).join("")}<button data-menu>경로 선택으로</button></div>`,
+    [...[0, 1, 2, 3].map((t) => () => start(true, id, t)), pathLab],
   );
 }
 function resume() {
@@ -151,7 +181,7 @@ function pause() {
   screen = "pause";
   shown = "pause";
   modal(
-    `<div class="eyebrow">THE MARKET CAN WAIT.</div><h2>잠시 영업 중단.</h2><p>사냥과 성장 시간은 멈춰 있습니다.</p><div class="menu-actions"><button data-menu class="primary" id="resume">계속 사냥하기</button><button data-menu>조작 안내</button><button data-menu>소리 켜기 / 끄기</button><button data-menu>공격 콘 표시: ${game.debugTargeting ? "켜짐" : "꺼짐"}</button></div><p class="menu-hint">↑ ↓ 선택 · ENTER 확인 · ESC 복귀</p>`,
+    `<div class="eyebrow">THE MARKET CAN WAIT.</div><h2>잠시 영업 중단.</h2><p>사냥과 성장 시간은 멈춰 있습니다.</p><div class="menu-actions"><button data-menu class="primary" id="resume">계속 사냥하기</button><button data-menu>조작 안내</button><button data-menu>소리 켜기 / 끄기</button><button data-menu>공격 콘 표시: ${game.debugTargeting ? "켜짐" : "꺼짐"}</button>${game.previewPath ? "<button data-menu>연구실로 돌아가기</button>" : ""}</div><p class="menu-hint">↑ ↓ 선택 · ENTER 확인 · ESC 복귀</p>`,
     [
       resume,
       openHelp,
@@ -163,6 +193,7 @@ function pause() {
         game.mode = "playing";
         pause();
       },
+      ...(game.previewPath ? [pathLab] : []),
     ],
   );
 }
@@ -187,6 +218,17 @@ function openHelp() {
   );
 }
 function rewardInfo(reward) {
+  if (["path", "path-tier"].includes(reward.kind)) {
+    const p = ACTION_PATHS[reward.id];
+    return {
+      title: `${p.name} · T${reward.tier}`,
+      description: p["tier" + reward.tier].preview,
+      label: "액션 경로 / 명시적 선택",
+      icon: "↯",
+      color: "#b9dbc3",
+      note: "장비 조건 불일치 시 휴면 · 재장착하면 복구",
+    };
+  }
   if (reward.kind === "action") {
     const d = ACTION_UPGRADES[reward.id],
       rank = game.player.actionRanks[d.id] || 0,
@@ -283,11 +325,26 @@ function showResult() {
       p.mutations.map((m) => MUTATIONS[m.id].name).join(" · ") || "없음";
   modal(
     `<div class="eyebrow">${won ? "PAYMENT AUTHORIZED" : game.previewActions ? "ACTION PREVIEW / NOT ARCHIVED" : "LOT CLOSED / " + (game.saved ? "BUILD ARCHIVED" : "SAVE FAILED")}</div><h2>${won ? "살아서 돌아온 <em>상품.</em>" : "다음 주인을 <em>기다립니다.</em>"}</h2><p>${won ? "도축장 주인을 처치했습니다. 이번 사냥의 수익은 당신 것입니다." : game.previewActions ? "미리보기가 끝났습니다. 일반 사냥에서는 톱날 운용을 성장 보상으로 선택하세요." : `${game.cause}에게 쓰러졌습니다. 당신이 만든 빌드가 다음 사냥터에 남습니다.`}</p><div class="result-stats"><span><b>${timeLabel(game.t)}</b>생존 시간</span><span><b>${game.kills}</b>처치</span><span><b>${game.level}</b>신체 레벨</span></div><p class="result-build">${organs}<br>변이: ${mutations}<br>피해 / 직접 ${Math.round(p.stats.direct)} · 자동 ${Math.round(p.stats.auto)} · 변이 ${Math.round(p.stats.mutation)}<br>${won ? "탈출한 빌드는 사망 기록에 추가되지 않습니다." : game.previewActions ? "미리보기 런은 사망 기록을 저장하지 않습니다." : !game.saved ? "기록을 저장하지 못했습니다." : storage.persistent ? "추적자 기록을 브라우저에 저장했습니다." : "저장이 차단되어 현재 탭에서만 기록됩니다."}</p><div class="menu-actions"><button data-menu class="primary" id="restart">다시 사냥하기 →</button><button data-menu id="return-title">시장 입구로</button></div>`,
-    [() => start(game.previewActions), title],
+    [
+      () =>
+        start(
+          game.previewActions,
+          game.previewPath,
+          game.player.actionMorph.tier,
+        ),
+      title,
+    ],
   );
 }
 function syncScreen() {
-  if (!game || screen === "title" || screen === "help" || screen === "pause")
+  if (
+    !game ||
+    screen === "title" ||
+    screen === "help" ||
+    screen === "pause" ||
+    screen === "path-lab" ||
+    screen === "path-tier"
+  )
     return;
   if (
     ["levelup", "inherit"].includes(game.mode) &&
@@ -353,6 +410,27 @@ function updateHUD() {
           ((p.finisherUntil - game.t) / flow.finisherWindow) * 100,
         ) + "%"
       : "0%";
+  const state = p.actionMorph,
+    path = ACTION_PATHS[state.pathId || game.previewPath];
+  if (path) {
+    const tier = activeMorphTier(p),
+      constructs = state.temporaryEntities;
+    $("action-rank").textContent =
+      `${path.name} · T${state.tier}${state.pathId && !tier ? " · 휴면" : ""}`;
+    $("action-stages").innerHTML = [1, 2, 3]
+      .map(
+        (t) =>
+          `<span class="action-stage ${tier >= t ? "unlocked" : ""}"><b>${t}</b>T${t}</span>`,
+      )
+      .join("");
+    $("action-cue").textContent =
+      state.pathId && !tier
+        ? game.morph.status(p).reason
+        : `${tier ? path["tier" + tier].preview : "기본 동작"} · 잔상/소환 ${constructs.length} · 충전 ${(p.attack?.chargeAmount || 0).toFixed(2)}초`;
+    $("action-window").style.width =
+      `${Math.min(100, ((p.attack?.chargeAmount || 0) / 0.9) * 100)}%`;
+  }
+
   $("mutation-count").textContent = String(p.mutations.length).padStart(2, "0");
   $("mutations").innerHTML = p.mutations.length
     ? p.mutations
@@ -434,6 +512,8 @@ window.addEventListener("keydown", (event) => {
     if (code === "Escape") {
       if (screen === "help") $("close-help").click();
       else if (screen === "pause") resume();
+      else if (screen === "path-tier") pathLab();
+      else if (screen === "path-lab") title();
     }
     return;
   }

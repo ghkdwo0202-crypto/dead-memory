@@ -8,6 +8,8 @@ const files = [
   "data.js",
   "navigation.js",
   "storage.js",
+  "action-paths.js",
+  "action-morph.js",
   "core.js",
   "render.js",
   "game.js",
@@ -109,7 +111,7 @@ function zip(entries) {
   end.writeUInt32LE(offset, 16);
   return Buffer.concat([...local, directory, end]);
 }
-const instructions = `MEAT MARKET — 실행 안내\n\n1. ZIP 압축을 풉니다.\n2. MEAT-MARKET.html을 Chrome 또는 Edge로 엽니다.\n3. Enter를 눌러 사냥터에 입장합니다.\n\n방향키: 이동 / 메뉴 선택\nZ: 공격 (길게 누르기 가능)\nX: 회피\nC: 특수 공격\nEnter: 확인\nEsc: 일시정지\n\nNode.js, 개발 서버, 인터넷 연결이 필요하지 않습니다.\n`;
+const instructions = `MEAT MARKET — 실행 안내\n\n1. ZIP 압축을 풉니다.\n2. MEAT-MARKET.html을 Chrome 또는 Edge로 엽니다.\n3. Enter를 눌러 사냥터에 입장합니다. 액션 비교는 방향키로 액션 경로 연구실을 선택하세요.\n\n방향키: 이동 / 메뉴 선택\nZ: 공격 (길게 누르기 가능)\nX: 회피\nC: 특수 공격\nEnter: 확인\nEsc: 일시정지\n\nNode.js, 개발 서버, 인터넷 연결이 필요하지 않습니다.\n`;
 const archive = zip([
   ["MEAT-MARKET.html", html],
   ["START.txt", instructions],

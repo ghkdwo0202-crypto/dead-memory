@@ -11,6 +11,16 @@ import {
   sanitizeActionRanks,
 } from "./data.js";
 import { distance, lineOfSight, findPath } from "./navigation.js";
+import { ActionMorph } from "./action-morph.js";
+import {
+  ACTION_PATHS,
+  emptyMorph,
+  restoreMorph,
+  serializeMorph,
+  morphRewards,
+  selectMorph,
+  activeMorphTier,
+} from "./action-paths.js";
 export { distance } from "./navigation.js";
 export function direction(input = {}) {
   let x = Number(Boolean(input.right)) - Number(Boolean(input.left)),
@@ -97,6 +107,7 @@ export class Actor {
       lastMove: { x: 1, y: 0 },
       lastNonZeroFacing: 0,
       actionRanks: {},
+      actionMorph: emptyMorph(),
       sawCombo: { targetId: null, hits: 0, until: 0 },
       finisherUntil: 0,
       lastDashAt: -Infinity,
@@ -155,7 +166,12 @@ export class Actor {
 export class OrganSystem {
   static equip(actor, id) {
     const organ = ORGANS[id];
-    if (!organ || actor.organs[organ.slot] === id) return false;
+    if (
+      !organ ||
+      organ.implemented === false ||
+      actor.organs[organ.slot] === id
+    )
+      return false;
     const old = actor.organs[organ.slot];
     actor.organs[organ.slot] = id;
     actor.mutations = actor.mutations.filter((m) => m.organID !== old);
@@ -168,6 +184,7 @@ export class OrganSystem {
       actor.finisherUntil = 0;
       actor.dashLinkUsed = actor.dashSerial;
     }
+    actor.morphController?.sync(actor);
     return true;
   }
   static mutate(actor, id, organID) {
@@ -203,7 +220,7 @@ export function targetFor(actor, targets, rule = actor.arm?.targetingRule) {
 }
 export function rewardCandidates(actor, random = Math.random) {
   const organs = Object.values(ORGANS)
-    .filter((o) => actor.organs[o.slot] !== o.id)
+    .filter((o) => o.implemented !== false && actor.organs[o.slot] !== o.id)
     .map((o) => ({
       kind: "organ",
       id: o.id,
@@ -229,21 +246,34 @@ export function rewardCandidates(actor, random = Math.random) {
   const actions = Object.values(ACTION_UPGRADES)
     .filter(
       (d) =>
+        !actor.actionMorph.pathId &&
         actor.organs.arm === d.organID &&
         (actor.actionRanks[d.id] || 0) < d.maxRank,
     )
     .map((d) => ({ kind: "action", id: d.id, synergy: true }));
-  const pool = [...organs, ...mutations, ...actions]
+  const pathChoices = morphRewards(actor);
+  const selected = ACTION_PATHS[actor.actionMorph.pathId];
+  const matching = selected
+    ? organs.filter((o) => Object.values(selected.required).includes(o.id))
+    : [];
+  const pool = [...organs, ...mutations, ...actions, ...pathChoices]
     .map((value) => ({ value, n: random() }))
     .sort((a, b) => a.n - b.n)
     .map((x) => x.value);
   // The first two levels introduce automatic organs and targeting/passives before numeric rewards.
-  const priority = !actor.organs.back
-    ? pool.find((x) => x.kind === "organ" && ORGANS[x.id].slot === "back")
-    : !actor.organs.heart
-      ? pool.find((x) => x.kind === "organ" && ORGANS[x.id].slot === "heart")
-      : pool.find((x) => x.synergy);
-  const synergy = actions[0] || pool.find((x) => x.synergy && x !== priority);
+  const priority =
+    pathChoices[0] ||
+    matching[0] ||
+    (!actor.organs.back
+      ? pool.find((x) => x.kind === "organ" && ORGANS[x.id].slot === "back")
+      : !actor.organs.heart
+        ? pool.find((x) => x.kind === "organ" && ORGANS[x.id].slot === "heart")
+        : pool.find((x) => x.synergy));
+  const synergy =
+    pathChoices[1] ||
+    matching.find((x) => x !== priority) ||
+    actions[0] ||
+    pool.find((x) => x.synergy && x !== priority);
   return [
     ...new Set([
       ...(priority ? [priority] : []),
@@ -254,10 +284,13 @@ export function rewardCandidates(actor, random = Math.random) {
   ].slice(0, 3);
 }
 export function applyReward(actor, reward) {
+  if (reward.kind === "path" || reward.kind === "path-tier")
+    return selectMorph(actor, reward);
   if (reward.kind === "action") {
     const d = ACTION_UPGRADES[reward.id];
     if (
       !d ||
+      actor.actionMorph.pathId ||
       actor.organs.arm !== d.organID ||
       (actor.actionRanks[d.id] || 0) >= d.maxRank
     )
@@ -285,11 +318,14 @@ export function loadDeaths(storage) {
       ? data
           .filter(
             (d) =>
-              d?.version === 1 &&
+              [1, 2].includes(d?.version) &&
               d.equippedOrganIDs &&
               typeof d.equippedOrganIDs === "object" &&
               Object.entries(d.equippedOrganIDs).every(
-                ([slot, id]) => id === null || ORGANS[id]?.slot === slot,
+                ([slot, id]) =>
+                  id === null ||
+                  (ORGANS[id]?.slot === slot &&
+                    ORGANS[id]?.implemented !== false),
               ) &&
               ORGANS[d.equippedOrganIDs.arm]?.slot === "arm" &&
               Array.isArray(d.mutationIDs) &&
@@ -312,7 +348,9 @@ export function saveDeath(
   { runID, time = 0, cause = "굶주린 것" } = {},
 ) {
   const record = {
-    version: 1,
+    version: 2,
+    mutationCatalogVersion: 1,
+    actionMorph: serializeMorph(actor),
     deathID: uid(),
     runID,
     equippedOrganIDs: { ...actor.organs },
@@ -347,6 +385,7 @@ export function createHunter(record, x, y) {
     if (id) OrganSystem.equip(a, id);
   for (const m of record.mutationIDs) OrganSystem.mutate(a, m.id, m.organID);
   a.actionRanks = sanitizeActionRanks(record.upgradeRanksById);
+  a.actionMorph = restoreMorph(record.actionMorph);
   a.state = "Patrol";
   a.record = record;
   a.lastSeen = null;
@@ -361,11 +400,16 @@ export class Game {
     random = Math.random,
     forceHunter = false,
     previewActions = false,
+    previewPath = null,
+    previewTier = 0,
   } = {}) {
     this.storage = storage;
     this.random = random;
     this.forceHunter = forceHunter;
-    this.previewActions = Boolean(previewActions);
+    this.previewActions = Boolean(previewActions || previewPath);
+    this.previewPath = ACTION_PATHS[previewPath]?.implemented
+      ? previewPath
+      : null;
     this.records = loadDeaths(storage);
     this.runID = uid();
     this.t = 0;
@@ -379,7 +423,18 @@ export class Game {
     this.hunterChecked = false;
     this.bossSpawned = false;
     this.player = new Actor({ id: "player", team: "player", organs: true });
-    if (this.previewActions) this.player.actionRanks.ARM_SAW_FLOW = 3;
+    if (this.previewActions && !this.previewPath)
+      this.player.actionRanks.ARM_SAW_FLOW = 3;
+    if (this.previewPath) {
+      for (const id of Object.values(ACTION_PATHS[this.previewPath].required))
+        OrganSystem.equip(this.player, id);
+      if (previewTier > 0)
+        this.player.actionMorph = restoreMorph({
+          version: 2,
+          pathId: this.previewPath,
+          tier: previewTier,
+        });
+    }
     this.enemies = [];
     this.projectiles = [];
     this.orbs = [];
@@ -397,8 +452,33 @@ export class Game {
     this.boss = null;
     this.noise = null;
     this.spawnCount = 0;
+    this.morph = new ActionMorph(this);
+    this.morph.attach(this.player);
     this.installEvents();
-    for (let i = 0; i < 7; i++) this.spawnEnemy("hungry");
+    if (this.previewPath === "PATH_25")
+      for (let i = 0; i < 3; i++) {
+        this.player.timers.auto = 0;
+        this.morph.nativeBrood(this.player);
+      }
+    if (this.previewPath) {
+      this.spawnAt = this.eliteAt = Infinity;
+      this.hunterChecked = this.bossSpawned = true;
+      for (const [dx, dy, type] of [
+        [100, 0, "hungry"],
+        [-100, 0, "hungry"],
+        [0, 110, "hungry"],
+        [300, 0, "boss"],
+      ]) {
+        const e = this.spawnEnemy(type, {
+          x: this.player.x + dx,
+          y: this.player.y + dy,
+        });
+        e.hp = e.maxHP = 100000;
+        e.trainingDummy = true;
+        e.speed = 0;
+        e.nextAttack = Infinity;
+      }
+    } else for (let i = 0; i < 7; i++) this.spawnEnemy("hungry");
     this.notify("살아 나오면 전부 당신 겁니다.", "HUNT 001 / MARKET OPEN");
   }
   walkable(x, y, r = 0) {
@@ -498,7 +578,10 @@ export class Game {
       (1 + actor.upgrades.speed) *
       (actor.statuses.slow ? STATUSES.slow.speed : 1) *
       (actor.statuses.stun ? 0 : 1) *
-      (actor.attack ? actor.arm?.baseStats.moveScale || 1 : 1)
+      (actor.attack && actor.attack.kind !== "charge"
+        ? actor.arm?.baseStats.moveScale || 1
+        : 1) *
+      this.morph.movementScale(actor)
     );
   }
   haste(actor) {
@@ -511,6 +594,8 @@ export class Game {
   requestAttack(actor, special = false, buffer = true) {
     if (actor.dead || !actor.arm || actor.statuses.stun) return false;
     if (special && actor.specialAt > this.t) return false;
+    if (special && actor.attack?.kind === "charge")
+      this.morph.cancelCharge(actor);
     if (actor.dashUntil > this.t || actor.attack) {
       const primedFinisher =
         special && actionRank(actor) >= 2 && actor.finisherUntil > this.t;
@@ -550,7 +635,7 @@ export class Game {
         : actor.lastNonZeroFacing;
     actor.face = angle;
     actor.faceLockUntil = this.t + arm.targetingRule.directionLock;
-    const rank = actionRank(actor),
+    const rank = actor.actionMorph.pathId ? 0 : actionRank(actor),
       flow = ACTION_UPGRADES.ARM_SAW_FLOW;
     const predicted =
       !special &&
@@ -616,6 +701,10 @@ export class Game {
       actor.statuses.stun
     )
       return false;
+    const wasAttacking = Boolean(
+      actor.attack && actor.attack.kind !== "charge",
+    );
+    if (actor.attack?.kind === "charge") this.morph.cancelCharge(actor);
     if (
       actor.attack &&
       this.t - actor.attack.start < actor.arm.baseStats.cancelFrom
@@ -640,6 +729,7 @@ export class Game {
     if (!actor.rechargeAt) actor.rechargeAt = this.t + CONFIG.dash.recharge;
     actor.evadedThisDash = false;
     this.events.emit("OnDash", { actor, sourceID: "dash" });
+    this.morph.onDash(actor, wasAttacking);
     this.effect("dash", actor.x, actor.y, {
       angle: Math.atan2(chosen.y, chosen.x),
       life: 0.22,
@@ -678,6 +768,8 @@ export class Game {
       knockback = 0,
       stagger = 0,
       attackInstanceId = null,
+      suppressProcs = false,
+      damageCap = Infinity,
     } = {},
   ) {
     if (!target || target.dead || source === target) return 0;
@@ -747,8 +839,18 @@ export class Game {
       target.markUntil > this.t
     )
       multiplier *= 1.3;
+    if (
+      direct &&
+      source.organs.eye === "EYE_WEAK" &&
+      ["elite", "boss"].includes(target.type)
+    )
+      multiplier *= 1.2;
     const critical = direct && this.random() < (source.critChance || 0),
-      actual = Math.min(target.hp, amount * multiplier * (critical ? 1.5 : 1));
+      actual = Math.min(
+        target.hp,
+        Math.max(0, damageCap),
+        amount * multiplier * (critical ? 1.5 : 1),
+      );
     target.hp -= actual;
     if (attackKey && actual > 0) {
       target.receivedAttacks.set(attackKey, this.t);
@@ -760,7 +862,7 @@ export class Game {
     if (target.team === "player") target.hurtUntil = this.t + 0.45;
     target.flashUntil = this.t + 0.08;
     target.staggerUntil = Math.max(target.staggerUntil, this.t + stagger);
-    if (knockback) {
+    if (knockback && !target.trainingDummy) {
       const d = distance(source, target) || 1;
       this.move(
         target,
@@ -779,7 +881,7 @@ export class Game {
       color:
         target.team === "player" ? "#ff7a72" : critical ? "#ffe4a4" : "#e9dac4",
     });
-    if (direct) {
+    if (direct && !suppressProcs) {
       this.hitstop = Math.max(this.hitstop, 0.018);
       this.events.emit(
         "OnDirectHit",
@@ -794,36 +896,38 @@ export class Game {
         context,
       );
     }
-    this.events.emit(
-      "OnHit",
-      {
-        actor: source,
-        target,
-        organID,
-        damage: actual,
-        sourceID: organID,
-        mutation,
-        status,
-        attackInstanceId: attackKey,
-      },
-      context,
-    );
+    if (!suppressProcs)
+      this.events.emit(
+        "OnHit",
+        {
+          actor: source,
+          target,
+          organID,
+          damage: actual,
+          sourceID: organID,
+          mutation,
+          status,
+          attackInstanceId: attackKey,
+        },
+        context,
+      );
     if (target.hp <= 0 && !target.dead) {
       target.dead = true;
       target.attack = null;
       target.buffer = null;
       if (source.stats) source.stats.kills++;
-      this.events.emit(
-        "OnKill",
-        {
-          actor: source,
-          target,
-          organID,
-          sourceID: organID,
-          attackInstanceId: attackKey,
-        },
-        context,
-      );
+      if (!suppressProcs)
+        this.events.emit(
+          "OnKill",
+          {
+            actor: source,
+            target,
+            organID,
+            sourceID: organID,
+            attackInstanceId: attackKey,
+          },
+          context,
+        );
       this.onDeath(target, source);
     }
     return actual;
@@ -941,6 +1045,10 @@ export class Game {
           : 1
         : 1;
     if (native) attack.nativeStrike = strike;
+    if (scale === 1 && this.morph.execute(actor, attack, context)) {
+      this.morph.afterAttack(actor, attack);
+      return;
+    }
     this.events.emit(
       "OnAttack",
       {
@@ -1029,6 +1137,7 @@ export class Game {
         finisher: attack.finisher,
       });
     }
+    if (scale === 1) this.morph.afterAttack(actor, attack);
   }
   autoTarget(actor, range) {
     return this.targets(actor)
@@ -1044,6 +1153,10 @@ export class Game {
   autoAttack(actor) {
     const organ = ORGANS[actor.organs.back];
     if (!organ || actor.dead || actor.statuses.stun) return;
+    if (organ.id === "BACK_BROOD") {
+      this.morph.nativeBrood(actor);
+      return;
+    }
     if ((actor.timers.auto || 0) > this.t) return;
     const target = this.autoTarget(actor, organ.baseStats.range);
     if (!target) return;
@@ -1080,7 +1193,8 @@ export class Game {
         life: 0.2,
       });
     }
-    actor.timers.auto = this.t + organ.cooldown / this.haste(actor);
+    actor.timers.auto =
+      this.t + organ.cooldown / this.haste(actor) / this.morph.autoSpeed(actor);
     this.events.emit("OnAttack", {
       actor,
       organID: organ.id,
@@ -1095,9 +1209,33 @@ export class Game {
     });
   }
   installEvents() {
+    this.events.on("OnHit", (e) => {
+      const a = e.actor;
+      if (
+        a.organs.heart !== "HEART_PARASITE" ||
+        e.direct ||
+        e.mutation ||
+        e.status ||
+        !e.organID?.startsWith("BACK_")
+      )
+        return;
+      const second = Math.floor(this.t);
+      if (a.timers.parasiteSecond !== second) {
+        a.timers.parasiteSecond = second;
+        a.timers.parasiteCount = 0;
+      }
+      if ((a.timers.parasiteCount || 0) < 4) {
+        a.specialAt = Math.max(this.t, a.specialAt - 0.15);
+        a.timers.parasiteCount = (a.timers.parasiteCount || 0) + 1;
+      }
+    });
     this.events.on("OnSuccessfulEvade", ({ actor }) => {
       const flow = ACTION_UPGRADES.ARM_SAW_FLOW;
-      if (actionRank(actor) >= 3 && (actor.timers.flowEvade || 0) <= this.t) {
+      if (
+        !actor.actionMorph.pathId &&
+        actionRank(actor) >= 3 &&
+        (actor.timers.flowEvade || 0) <= this.t
+      ) {
         actor.specialAt = Math.max(
           this.t,
           actor.specialAt - flow.evadeCooldownRefund,
@@ -1239,6 +1377,7 @@ export class Game {
   }
   updateActor(actor, dt) {
     if (actor.dead) return;
+    this.morph.sync(actor);
     if (
       actor.dashes < CONFIG.dash.charges &&
       actor.rechargeAt &&
@@ -1310,6 +1449,8 @@ export class Game {
           p.dead = true;
           break;
         }
+        this.morph.hitBroodProjectile(p);
+        if (p.dead) break;
         for (const target of this.targets(p.actor))
           if (
             (!p.outboundSpent || p.returning) &&
@@ -1488,6 +1629,7 @@ export class Game {
     };
   }
   enemyStrike(enemy, w) {
+    this.morph.hostileStrike(enemy, w);
     if (w.kind === "spit" || w.kind === "hook") {
       this.projectile(enemy, null, w.angle, {
         damage: ENEMIES[enemy.type].damage,
@@ -1662,6 +1804,7 @@ export class Game {
   onDeath(target, source) {
     if (target === this.player) {
       this.mode = "dead";
+      this.morph.cleanup(target);
       this.cause =
         source.team === "hunter"
           ? "이전의 사냥꾼"
@@ -1722,17 +1865,20 @@ export class Game {
         ? ORGANS[reward.id].name
         : reward.kind === "mutation"
           ? MUTATIONS[reward.id].name
-          : reward.kind === "action"
-            ? ACTION_UPGRADES[reward.id].ranks[
-                this.player.actionRanks[reward.id] - 1
-              ].name
-            : "신체 강화",
+          : reward.kind === "path" || reward.kind === "path-tier"
+            ? ACTION_PATHS[reward.id].name + " T" + reward.tier
+            : reward.kind === "action"
+              ? ACTION_UPGRADES[reward.id].ranks[
+                  this.player.actionRanks[reward.id] - 1
+                ].name
+              : "신체 강화",
     );
     this.rewardChoices = [];
     this.checkLevel();
     return true;
   }
   checkLevel() {
+    if (this.previewPath) return;
     if (this.mode !== "playing" || this.xp < this.xpRequired) return;
     this.xp -= this.xpRequired;
     this.level++;
@@ -1756,6 +1902,7 @@ export class Game {
       }
     }
     this.hunter = createHunter(r, position.x, position.y);
+    this.morph.attach(this.hunter);
     this.enemies.push(this.hunter);
     this.notify("당신이 만든 상품이 돌아왔습니다.", "PAST BUILD DETECTED");
     return this.hunter;
@@ -1780,9 +1927,12 @@ export class Game {
     }
     if (input.dashPressed) this.dash(p, input);
     if (input.specialPressed) this.requestAttack(p, true);
-    if (input.attack) this.requestAttack(p, false);
+    const captured = this.morph.handleInput(p, input, dt);
+    if (input.attack && !captured) this.requestAttack(p, false);
     for (const actor of [p, ...this.enemies]) this.updateActor(actor, dt);
-    for (const enemy of this.enemies) this.enemyAI(enemy, dt);
+    this.morph.tick(dt);
+    for (const enemy of this.enemies)
+      if (!enemy.trainingDummy) this.enemyAI(enemy, dt);
     this.updateProjectiles(dt);
     for (const hazard of this.hazards)
       if (!hazard.done && this.t >= hazard.at) {
@@ -1851,7 +2001,7 @@ export class Game {
       }
       this.notify("도축장 주인이 입장했습니다.", "FINAL LOT / BOSS");
     }
-    if (this.t >= CONFIG.runLimit && !p.dead) {
+    if (!this.previewPath && this.t >= CONFIG.runLimit && !p.dead) {
       this.damage(
         new Actor({ team: "enemy", type: "closure" }),
         p,
@@ -1872,6 +2022,17 @@ export class Game {
     return {
       mode: this.mode,
       previewActions: this.previewActions,
+      previewPath: this.previewPath,
+      morphLog: this.morph.logs.slice(-20),
+      constructs: this.morph.entities.map((e) => ({
+        id: e.id,
+        kind: e.kind,
+        x: e.x,
+        y: e.y,
+        hp: e.hp,
+        expiresAt: e.expiresAt,
+        ownerId: e.owner.id,
+      })),
       time: this.t,
       level: this.level,
       xp: this.xp,
@@ -1889,6 +2050,9 @@ export class Game {
         attack: this.player.attack ? { ...this.player.attack } : null,
         stats: { ...this.player.stats },
         actionRanks: { ...this.player.actionRanks },
+        actionMorph: serializeMorph(this.player),
+        activeMorphTier: activeMorphTier(this.player),
+        charge: this.player.attack?.chargeAmount || 0,
         sawCombo: { ...this.player.sawCombo },
         finisherUntil: this.player.finisherUntil,
         lastNonZeroFacing: this.player.lastNonZeroFacing,
