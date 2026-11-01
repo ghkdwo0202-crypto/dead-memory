@@ -6,6 +6,8 @@
 
 ## 실행과 조작
 
+[현재 P3 실행 ZIP 다운로드](https://github.com/ghkdwo0202-crypto/dead-memory/raw/88385e8/downloads/KAGE-IN-P3.zip) → 압축 해제 → `KAGE-IN-P3.html` 열기.
+
 Node.js 22 이상에서 `npm start` → `http://localhost:3000`. 첫 화면에서 **성문 돌파** 또는 **검술 수련장**을 방향키·Enter로 선택합니다.
 
 | 입력 | 실제 기능 |

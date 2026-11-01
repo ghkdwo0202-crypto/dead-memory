@@ -53,4 +53,8 @@ A 1회만 눌러 즉발 후 0.75초 기다려 조합이 사라짐을 확인. AAA
 
 조합20개 중 **5개만 구현**, 나머지15개는 미리보기/실패 안내만 있다. 6종 환경 반응·4검술/4회피/8각인·8행동루프·미니보스·완성5~8분 구간은 아직 없다. 현재는 플랫폼 전투 테스트 구간이며 완성 P3로 보고하지 않는다. 체감 점프/발판 간격/적 난도와 카메라는 후속 플레이테스트로 조정해야 한다. 새 저장은 `kage-in.p3.v1` 교전 요약이며 이전 키는 읽거나 삭제하지 않는다.
 
-원격 main/P2를 덮어쓰지 않는다. 전환 소스와 P3 실행 ZIP을 같은 별도 브랜치에서 검토하도록 유지한다. GitHub CLI 인증 상태는 GH_TOKEN 로그인 실패로 관측되어 PR 자동 생성의 제약이 있다. 실제 업로드·PR 결과는 아래 완료 기록에 남긴다.
+원격 main/P2를 덮어쓰지 않는다. 전환 소스와 P3 실행 ZIP을 같은 별도 브랜치에서 검토하도록 유지한다. GitHub CLI 인증 확인은 실패했고, 실제 Draft PR 생성 요청도 `https://api.github.com/graphql`의 `Forbidden`으로 거절됐다. 차단을 우회하거나 main을 직접 변경하지 않았다.
+
+## 완료 기록
+
+전환 브랜치 `feature/kage-in-p3-sideview`에 소스와 실행 ZIP을 함께 업로드했다. 실행 코드 커밋 `88385e8`. [P3 다운로드](https://github.com/ghkdwo0202-crypto/dead-memory/raw/88385e8/downloads/KAGE-IN-P3.zip)는 HTTP200/27,651바이트로 직접 내려받아 로컬 HTML/ZIP 바이트 일치와 CRC를 확인했다. [변경 비교](https://github.com/ghkdwo0202-crypto/dead-memory/compare/main...feature/kage-in-p3-sideview)에서 검토할 수 있다. Draft PR은 위 API 차단으로 생성하지 못했다. 원격 main `b99fae3`, P2 다운로드 브랜치 `6027ce2`는 변경하지 않았고 환경/Pages 게시나 병합도 하지 않았다.
