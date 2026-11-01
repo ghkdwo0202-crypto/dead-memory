@@ -11,7 +11,7 @@ const browser = await chromium.launch({
 const errors = [];
 const snap = (p) => p.evaluate(() => window.meatMarket.snapshot());
 async function enter(page, index, tier) {
-  await page.goto(process.env.GAME_URL || "http://127.0.0.1:3000");
+  await page.goto(process.env.GAME_URL || "http://127.0.0.1:3000/legacy.html");
   for (let i = 0; i < 4; i++) await page.keyboard.press("ArrowDown");
   await page.keyboard.press("Enter");
   assert.equal((await snap(page)).screen, "path-lab");

@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#151511" />
+    <title>MEAT MARKET — 살아 나오면 전부 당신 겁니다.</title>
+    <link rel="stylesheet" href="./src/style.css" />
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="./" aria-label="MEAT MARKET 홈"
+        ><span class="brand-icon" aria-hidden="true"
+          ><svg viewBox="0 0 48 48" width="42" height="42">
+            <path
+              fill="currentColor"
+              d="M20 1h8l1 9 7-5 6 6-5 7 10 2v8l-10 1 5 7-6 6-7-5-1 10h-8l-1-10-7 5-6-6 5-7-10-1v-8l10-2-5-7 6-6 7 5z"
+            />
+            <circle cx="24" cy="24" r="9" fill="#151511" /></svg></span
+        ><span>MEAT MARKET<small>HUMAN RESOURCES, REDEFINED.</small></span></a
+      >
+      <div class="header-notes">
+        <span class="status-dot"></span> MARKET IS OPEN
+        <button id="help">조작 안내</button
+        ><button id="audio" aria-pressed="false">소리 켜기</button>
+      </div>
+    </header>
+    <main>
+      <div class="heading">
+        <div>
+          <p class="eyebrow">EST. 1987 / INDEPENDENT HUNTING GROUNDS</p>
+          <h1>죽이지 못하면, <em>상품이 된다.</em></h1>
+        </div>
+        <div class="permit">
+          <span>HUNTING PERMIT</span
+          ><b>No. <span id="permit-number">0001</span> <i>●</i></b>
+        </div>
+      </div>
+      <div class="game-shell">
+        <section class="arena" aria-label="키보드 조작 게임">
+          <canvas
+            id="game"
+            width="1200"
+            height="760"
+            tabindex="0"
+            aria-label="방향키 이동, Z 공격, X 회피, C 특수 공격, Enter 선택, Esc 일시정지"
+          ></canvas>
+          <div class="arena-top">
+            <span
+              ><i class="status-dot"></i>
+              <span id="location">SECTOR 01 / THE KILLING FLOOR</span></span
+            ><span id="population">NO SIGNAL</span>
+          </div>
+          <div id="notice" class="notice hidden" aria-live="polite"></div>
+          <div id="boss-hud" class="boss-hud hidden">
+            <div><span id="boss-name"></span><span id="boss-hp"></span></div>
+            <div class="track"><i id="boss-fill"></i></div>
+          </div>
+          <div class="arena-bottom">
+            <span id="objective">살아 나오면 전부 당신 겁니다.</span
+            ><span><kbd>ESC</kbd> 일시정지</span>
+          </div>
+          <div id="overlay" class="overlay"></div>
+        </section>
+        <aside>
+          <section class="panel">
+            <div class="section-title">
+              <span>01 / VITAL SIGNS</span><span id="hp-text">120 / 120</span>
+            </div>
+            <div class="track health"><i id="hp-fill"></i></div>
+            <div class="mini-row">
+              <span>회피 충전</span><span id="dash-indicator">▰ ▰</span
+              ><kbd>X</kbd>
+            </div>
+            <div class="mini-row">
+              <span>특수 공격</span><b id="special-cd">READY</b><kbd>C</kbd>
+            </div>
+          </section>
+          <section class="panel">
+            <div class="section-title">
+              <span>02 / GROWTH RATE</span><span id="level">LV. 01</span>
+            </div>
+            <div class="track xp"><i id="xp-fill"></i></div>
+            <div class="mini-row">
+              <span>경험치</span><span id="xp-text">0 / 14</span>
+            </div>
+          </section>
+          <section class="panel">
+            <div class="section-title">
+              <span>03 / BODY INVENTORY</span><span class="red">4 SLOTS</span>
+            </div>
+            <div id="organs"></div>
+          </section>
+          <section class="panel">
+            <div class="section-title">
+              <span>04 / MUTATIONS</span><span id="mutation-count">00</span>
+            </div>
+            <div id="mutations" class="mutations">
+              <span class="dim">아직 변이가 없습니다.</span>
+            </div>
+          </section>
+          <section class="panel market-value">
+            <div class="section-title">
+              <span>CURRENT MARKET VALUE</span><span>₩</span>
+            </div>
+            <b id="value">12,000</b
+            ><span>몸값은 살아 있는 동안만 유효합니다.</span>
+          </section>
+        </aside>
+      </div>
+      <section class="action-route" aria-label="액션 성장 축">
+        <div class="action-heading">
+          <span>COMBAT STYLE / <b id="action-rank">톱날 운용 0/3</b></span>
+          <div id="action-stages">
+            <span class="action-stage">1 돌파 베기</span
+            ><span class="action-stage">2 회수 회전</span
+            ><span class="action-stage">3 전투 순환</span>
+          </div>
+        </div>
+        <p id="action-cue">
+          레벨업에서 톱날 운용을 선택해 Z·X·C 연계를 확장하세요.
+        </p>
+        <div class="action-window"><i id="action-window"></i></div>
+      </section>
+      <div class="bottom-bar">
+        <div class="controls">
+          <span><kbd>↑↓←→</kbd> 이동</span><span><kbd>Z</kbd> 공격</span
+          ><span><kbd>X</kbd> 회피</span><span><kbd>C</kbd> 특수 공격</span
+          ><span><kbd>ENTER</kbd> 선택</span>
+        </div>
+        <div class="run-stats">
+          <span>TIME <b id="time">00:00</b></span
+          ><span>KILLS <b id="kills">000</b></span>
+        </div>
+      </div>
+      <footer>
+        <span>NO REFUNDS. NO REASSEMBLY. NO EXCEPTIONS.</span
+        ><span>ACTION SLICE v0.3 <i>✳︎</i></span>
+      </footer>
+    </main>
+    <script type="module" src="./src/game.js"></script>
+  </body>
+</html>

@@ -9,7 +9,7 @@ const browser = await chromium.launch({
   args: ["--no-sandbox", "--disable-dev-shm-usage"],
 });
 const errors = [],
-  url = process.env.GAME_URL || "http://127.0.0.1:3000";
+  url = process.env.GAME_URL || "http://127.0.0.1:3000/legacy.html";
 async function pageWithClock() {
   const page = await browser.newPage({
     viewport: { width: 1440, height: 1050 },
