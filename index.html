@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#0a1013" />
+    <title>DEAD MEMORY — 잊힌 자들의 회랑</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="/" aria-label="DEAD MEMORY 홈"
+        ><span class="brand-mark">✳</span> DEAD MEMORY
+        <small>PROTOTYPE / 01</small></a
+      >
+      <div class="header-right">
+        <span class="live-dot"></span> LOCAL MEMORY
+        <button id="help-button">조작법 <kbd>H</kbd></button
+        ><button id="sound-button" aria-pressed="false">소리 켜기</button>
+      </div>
+    </header>
+    <main>
+      <div class="chapter">
+        <span>ARCHIVE 001 / THE FORGOTTEN</span
+        ><span id="record-count">기록 검색 중</span>
+      </div>
+      <section class="title-row">
+        <div>
+          <p class="eyebrow">죽음은 끝이 아니다. 다음 적의 시작이다.</p>
+          <h1>잊힌 자들의 회랑<span>THE HALL OF ECHOES</span></h1>
+        </div>
+        <div class="run-meta">
+          <span id="run-number">RUN 001</span
+          ><b id="room-label">01 <i>/</i> 기억의 입구</b>
+        </div>
+      </section>
+      <div class="game-layout">
+        <section class="arena-wrap" aria-label="게임 전투 화면">
+          <canvas
+            id="game"
+            width="1120"
+            height="680"
+            tabindex="0"
+            aria-label="WASD 이동, 마우스 조준과 클릭 공격. Q E F 스킬, Space 대시. H 조작법."
+          ></canvas>
+          <div class="arena-top">
+            <span
+              ><i class="live-dot"></i>
+              <span id="phase-label">MEMORY OFFLINE</span></span
+            ><span id="enemy-count">AWAITING ENTRY</span>
+          </div>
+          <div id="hunter-warning" class="hunter-warning hidden"></div>
+          <div id="toast" class="toast hidden"></div>
+          <div class="arena-bottom">
+            <span id="objective">기억을 깨우고 회랑에 진입하세요.</span
+            ><span><kbd>ESC</kbd> 일시정지</span>
+          </div>
+          <div id="overlay" class="overlay"></div>
+        </section>
+        <aside>
+          <section class="side-section">
+            <div class="section-label">
+              <span>01 / VITAL SIGNAL</span><span id="hp-value">100 / 100</span>
+            </div>
+            <div class="health-track"><div id="health-fill"></div></div>
+            <div class="dash-row">
+              <span>DASH CHARGES</span>
+              <div id="dash-charges"><i></i><i></i></div>
+              <kbd>SPACE</kbd>
+            </div>
+          </section>
+          <section class="side-section loadout">
+            <div class="section-label">
+              <span>02 / EQUIPPED MEMORIES</span
+              ><button id="loadout-button">정보 <kbd>TAB</kbd></button>
+            </div>
+            <div id="skills"></div>
+            <p class="muted small">스킬을 순서대로 사용해 공명을 깨우세요.</p>
+          </section>
+          <section class="side-section">
+            <div class="section-label">
+              <span>03 / RESONANCE LINK</span><span class="cyan">AUTO</span>
+            </div>
+            <div id="combo-display" class="combo-display">
+              연계를 기다리는 중<span>스킬 사이 2초 · 상급 확장 1.5초</span>
+            </div>
+            <div class="combo-track"><div id="combo-fill"></div></div>
+            <div id="recipe-list"></div>
+          </section>
+          <section class="side-section history-section">
+            <div class="section-label">
+              <span>04 / DEATH ARCHIVE</span
+              ><span class="pink">PERSISTENT</span>
+            </div>
+            <div id="archive-preview">
+              아직 남겨진 기억이 없습니다.<br /><span class="muted"
+                >당신의 마지막 빌드가<br />다음 회차의 추적자가 됩니다.</span
+              >
+            </div>
+            <div id="hunter-health" class="hidden">
+              <div class="hunter-name"></div>
+              <div class="hunter-track"><div></div></div>
+              <span class="muted small" id="hunter-state"></span>
+            </div>
+          </section>
+        </aside>
+      </div>
+      <footer>
+        <span
+          ><i class="key-line"></i> <kbd>W A S D</kbd> 이동
+          <span class="separator">/</span> <kbd>LMB</kbd> 공격
+          <span class="separator">/</span> <kbd>RMB</kbd> 무기 액션
+          <span class="separator">/</span> <kbd>Q E F</kbd> 스킬</span
+        ><span>기억은 사라지지 않는다<span class="cyan"> ✳</span></span>
+      </footer>
+    </main>
+    <script type="module" src="/src/game.js"></script>
+  </body>
+</html>
