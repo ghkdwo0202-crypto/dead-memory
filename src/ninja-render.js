@@ -1,3 +1,4 @@
+import { SEALS } from "./ninjutsu-data.js";
 import { CONFIG, OBSTACLES } from "./data.js";
 const TAU = Math.PI * 2;
 function line(ctx, points, color, width = 1) {
@@ -158,6 +159,44 @@ function fighter(ctx, a, t, ghost = false) {
     ctx.fillStyle = player ? "#9ce1d5" : "#eb817a";
     ctx.fillRect(a.x - 19, a.y - height - 30, (38 * a.hp) / a.maxHP, 3);
   }
+  for (const [type, status] of Object.entries(a.ninjutsuStatuses || {})) {
+    const color = {
+      burn: "#ff926c",
+      wet: "#7cbfff",
+      shock: "#ead692",
+      windMark: "#a7e8ce",
+    }[type];
+    if (!color) continue;
+    circle(ctx, a.x, a.y + 9, 20 + (type === "wet" ? 4 : 0), color + "88");
+    if (type === "burn")
+      for (let i = 0; i < status.stacks; i++)
+        line(
+          ctx,
+          [
+            [a.x - 9 + i * 8, a.y - height - 17],
+            [a.x - 5 + i * 8, a.y - height - 28],
+            [a.x - 2 + i * 8, a.y - height - 19],
+          ],
+          color,
+          2,
+        );
+    else if (type === "wet") {
+      ctx.fillStyle = color;
+      ctx.font = "10px monospace";
+      ctx.fillText("滴", a.x - 5, a.y - height - 32);
+    } else if (type === "shock")
+      line(
+        ctx,
+        [
+          [a.x + 17, a.y - height - 23],
+          [a.x + 12, a.y - height - 12],
+          [a.x + 20, a.y - height - 14],
+          [a.x + 15, a.y - height - 3],
+        ],
+        color,
+        2,
+      );
+  }
   if (a.airHeight > 0 && !player) {
     ctx.fillStyle = "#dbeff2";
     ctx.font = "11px monospace";
@@ -301,6 +340,23 @@ export function renderNinja(
     }
     for (const a of [...game.enemies, p].sort((a, b) => a.y - b.y))
       if (!a.dead) fighter(ctx, a, t);
+    for (const b of game.ninjutsu.bolts) {
+      ctx.save();
+      ctx.translate(b.x, b.y);
+      ctx.rotate(b.angle);
+      ctx.strokeStyle = SEALS[b.element].color;
+      ctx.lineWidth = b.element === "water" ? 9 : 4;
+      ctx.globalAlpha = 0.8;
+      ctx.beginPath();
+      ctx.arc(0, 0, b.op.width / 2, -1.35, 1.35);
+      ctx.stroke();
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = "#f2fffb";
+      ctx.beginPath();
+      ctx.arc(0, 0, b.op.width / 2 - 6, -1.35, 1.35);
+      ctx.stroke();
+      ctx.restore();
+    }
     for (const b of game.projectiles) {
       ctx.save();
       ctx.translate(b.x, b.y);
@@ -330,7 +386,75 @@ export function renderNinja(
       const q = (t - e.born) / e.life;
       ctx.save();
       ctx.globalAlpha = Math.max(0, 1 - q);
-      if (e.type === "ninja-slash") {
+      if (e.type === "seal") {
+        ctx.fillStyle = SEALS[e.element].color;
+        ctx.font = "bold 19px serif";
+        ctx.fillText(e.glyph, e.x - 8, e.y - 40 - q * 22);
+        circle(ctx, e.x, e.y - 7, 22 + q * 16, SEALS[e.element].color);
+      } else if (e.type === "cast" || e.type === "invoke") {
+        ctx.lineWidth = 2;
+        circle(ctx, e.x, e.y, 24 + q * (e.range || 25), SEALS[e.element].color);
+        if (e.type === "invoke") {
+          ctx.font = "bold 28px serif";
+          ctx.fillStyle = SEALS[e.element].color;
+          ctx.fillText(SEALS[e.element].glyph, e.x - 13, e.y - 28);
+        }
+      } else if (e.type === "thunder-mark") {
+        ctx.lineWidth = 2;
+        circle(ctx, e.x, e.y, 25, "#ead692");
+        line(
+          ctx,
+          [
+            [e.x, e.y - 65],
+            [e.x, e.y - 30],
+          ],
+          "#ead692",
+          2,
+        );
+      } else if (e.type === "lightning-strike") {
+        ctx.lineWidth = 3;
+        const points = [
+          [e.x - 14, e.y - 180],
+          [e.x + 8, e.y - 130],
+          [e.x - 9, e.y - 95],
+          [e.x + 11, e.y - 58],
+          [e.x, e.y],
+        ];
+        line(ctx, points, "#ead692", reducedFlash ? 3 : 6);
+        line(ctx, points, "#fff7cf", 1.5);
+        circle(ctx, e.x, e.y, 20 + q * 35, "#ead692");
+        line(
+          ctx,
+          [
+            [e.start.x, e.start.y],
+            [e.x, e.y],
+          ],
+          "#ead69255",
+          1,
+        );
+      } else if (e.type === "fire-burst") {
+        ctx.lineWidth = 5;
+        circle(ctx, e.x, e.y, e.range * (0.35 + q * 0.65), "#ff926c");
+        circle(ctx, e.x, e.y, e.range * (0.15 + q * 0.45), "#ffc5a1");
+        for (let i = 0; i < 9; i++) {
+          const a = (i * TAU) / 9;
+          line(
+            ctx,
+            [
+              [
+                e.x + Math.cos(a) * e.range * 0.4,
+                e.y + Math.sin(a) * e.range * 0.4,
+              ],
+              [
+                e.x + Math.cos(a) * e.range * q,
+                e.y + Math.sin(a) * e.range * q,
+              ],
+            ],
+            "#ff986b",
+            3,
+          );
+        }
+      } else if (e.type === "ninja-slash") {
         const y = e.y - (e.airHeight || 0) * 48;
         ctx.strokeStyle = e.counter
           ? "#ffbd87"

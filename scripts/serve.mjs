@@ -37,5 +37,5 @@ const server = http.createServer(async (req, res) => {
   }
 });
 server.listen(Number(process.env.PORT || 3000), "0.0.0.0", () =>
-  console.log(`MEAT MARKET listening on port ${server.address().port}`),
+  console.log(`KAGE//IN listening on port ${server.address().port}`),
 );

@@ -1,3 +1,4 @@
+import { NinjutsuSystem } from "./ninjutsu.js";
 import { Game, CombatEvents, direction } from "./core.js";
 import { CONFIG } from "./data.js";
 import { distance } from "./navigation.js";
@@ -59,13 +60,19 @@ export function readNinjaRecords(storage) {
 const delta = (a, b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)));
 const memory = { getItem: () => null, setItem: () => {} };
 export class NinjaGame extends Game {
-  constructor({ storage = memory, random = Math.random, dojo = false } = {}) {
+  constructor({
+    storage = memory,
+    random = Math.random,
+    dojo = false,
+    sealTutorial = false,
+  } = {}) {
     // Reuse collision, navigation, hostile telegraphs, damage nonces and projectiles.
     // The parent sees empty storage; legacy records are never parsed/imported.
     super({ storage: memory, random });
     this.storage = storage;
     this.ninja = true;
     this.dojo = dojo;
+    this.sealTutorial = sealTutorial;
     this.records = readNinjaRecords(storage);
     this.enemies = [];
     this.effects = [];
@@ -94,6 +101,7 @@ export class NinjaGame extends Game {
     this.lastMomentumDecay = 0;
     this.shakeUntil = 0;
     this.shakeStrength = 0;
+    this.ninjutsu = new NinjutsuSystem(this);
     this.events.on("OnSuccessfulEvade", (e) => {
       if (e.actor !== p) return;
       p.perfectDodgeWindowEnd = this.t + 0.7;
@@ -164,6 +172,8 @@ export class NinjaGame extends Game {
   requestAttack(a, special = false, buffer = true) {
     if (a !== this.player) return super.requestAttack(a, special, buffer);
     if (a.dead || a.staggerUntil > this.t) return false;
+    if (special && (this.ninjutsu.invoked[0] || this.ninjutsu.invokeIntent))
+      return this.ninjutsu.requestCast();
     if (special && a.specialAt > this.t) return false;
     const slamReady =
       !special &&
@@ -228,6 +238,10 @@ export class NinjaGame extends Game {
   }
   executeAttack(a, attack) {
     if (a !== this.player) return super.executeAttack(a, attack);
+    if (attack.ninjutsuId) {
+      this.ninjutsu.execute(attack);
+      return;
+    }
     if (attack.resolved) return;
     attack.resolved = true;
     if (attack.special) {
@@ -300,7 +314,7 @@ export class NinjaGame extends Game {
   }
   damage(source, target, amount, opts = {}) {
     const hit = super.damage(source, target, amount, opts);
-    if (hit > 0 && source === this.player) {
+    if (hit > 0 && source === this.player && opts.direct) {
       this.hitstop = Math.max(this.hitstop, 0.05);
       this.shakeUntil = this.t + 0.12;
       this.shakeStrength =
@@ -309,6 +323,7 @@ export class NinjaGame extends Game {
     if (hit > 0 && target === this.player) {
       target.buffer = null;
       target.attack = null;
+      this.ninjutsu.cancelBuffered();
       target.styleScore = Math.max(0, target.styleScore - 18);
       target.staggerUntil = this.t + 0.15;
       this.addStyleReset();
@@ -341,6 +356,11 @@ export class NinjaGame extends Game {
   }
   jump(input = {}) {
     const p = this.player;
+    if (
+      p.attack?.ninjutsuId &&
+      this.t < p.attack.activeAt + p.attack.activeDuration
+    )
+      return false;
     if (p.dead || p.staggerUntil > this.t || p.dashUntil > this.t) return false;
     const dir = direction(input),
       air = p.airHeight > 0;
@@ -509,6 +529,15 @@ export class NinjaGame extends Game {
     if (a.airHeight > 0) return;
     return super.enemyAI(a, dt);
   }
+  projectile(actor, organID, angle, options = {}) {
+    if (
+      this.ninjutsu &&
+      this.projectiles.length + this.ninjutsu.bolts.length >=
+        350 - this.ninjutsu.reservedProjectiles()
+    )
+      return;
+    return super.projectile(actor, organID, angle, options);
+  }
   enemyStrike(enemy, w) {
     if (w.kind === "spit") {
       this.projectile(enemy, null, w.angle, {
@@ -540,7 +569,7 @@ export class NinjaGame extends Game {
               time: this.t,
               kills: this.kills,
               style: this.styleRank(),
-              phase: "P1",
+              phase: "P2",
             },
           ].slice(-8);
           this.storage.setItem(NINJA_SAVE_KEY, JSON.stringify(records));
@@ -570,6 +599,7 @@ export class NinjaGame extends Game {
           left: input.left,
           right: input.right,
         };
+    this.ninjutsu.queue(input.sealCommands || []);
     this.currentInput = input;
     this.accumulator += Math.min(0.1, Math.max(0, dt));
     while (this.accumulator >= NINJA_RULES.step) {
@@ -601,12 +631,14 @@ export class NinjaGame extends Game {
     this.pending = {};
     if (edges.dashPressed) this.dash(p, edges.dashPressed);
     if (edges.jumpPressed) this.jump(edges.jumpPressed);
+    this.ninjutsu.input();
     if (edges.specialPressed) this.requestAttack(p, true);
     if (edges.attackPressed?.down) this.attackDownIntentUntil = this.t + 0.15;
     if (input.attack || edges.attackPressed) this.requestAttack(p);
     for (const a of [p, ...this.enemies]) this.updateActor(a, dt);
     for (const e of this.enemies) if (!e.trainingDummy) this.enemyAI(e, dt);
     this.updateProjectiles(dt);
+    this.ninjutsu.tick(dt);
     for (const o of this.orbs) {
       const dist = distance(o, p);
       if (dist < 140) {
@@ -640,14 +672,55 @@ export class NinjaGame extends Game {
       .slice(-160);
     this.numbers = this.numbers.filter((n) => this.t - n.born < 0.6);
     this.notifications = this.notifications.filter((n) => n.until > this.t);
+    this.checkLevel();
+  }
+  checkLevel() {
+    if (this.dojo || this.mode !== "playing" || this.xp < this.xpRequired)
+      return;
+    this.xp -= this.xpRequired;
+    this.level++;
+    this.xpRequired = 14 + this.level * 7;
+    this.rewardChoices = [
+      { kind: "training", id: "health" },
+      { kind: "training", id: "speed" },
+      { kind: "training", id: "breath" },
+    ];
+    this.mode = "levelup";
+  }
+  choose(index) {
+    if (this.mode !== "levelup") return false;
+    const r = this.rewardChoices[index];
+    if (!r || r.kind !== "training") return false;
+    if (r.id === "health") {
+      this.player.maxHP += 20;
+      this.player.hp = Math.min(this.player.maxHP, this.player.hp + 40);
+    } else if (r.id === "speed")
+      this.player.upgrades.speed = Math.min(
+        0.3,
+        this.player.upgrades.speed + 0.05,
+      );
+    else if (r.id === "breath") {
+      for (const id of Object.keys(this.ninjutsu.cooldowns))
+        this.ninjutsu.cooldowns[id] = Math.max(
+          this.t,
+          this.ninjutsu.cooldowns[id] - 2,
+        );
+      this.player.dashes = 2;
+      this.player.rechargeAt = 0;
+    } else return false;
+    this.rewardChoices = [];
+    this.mode = "playing";
+    this.checkLevel();
+    return true;
   }
   snapshot() {
     return {
       ...super.snapshot(),
       ninja: true,
-      phase: "P1",
+      phase: "P2",
       dojo: this.dojo,
       style: this.styleRank(),
+      ninjutsu: this.ninjutsu.snapshot(),
       player: {
         ...super.snapshot().player,
         airHeight: this.player.airHeight,
@@ -669,6 +742,12 @@ export class NinjaGame extends Game {
         airHeight: e.airHeight || 0,
         juggleCount: e.juggleCount || 0,
         telegraph: e.telegraph,
+        ninjutsuStatuses: Object.fromEntries(
+          Object.entries(e.ninjutsuStatuses || {}).map(([key, value]) => [
+            key,
+            { stacks: value.stacks, expiresAt: value.expiresAt },
+          ]),
+        ),
       })),
       effects: this.effects.map((e) => ({ type: e.type, x: e.x, y: e.y })),
     };

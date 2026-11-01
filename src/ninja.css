@@ -503,3 +503,140 @@ footer i {
     font-size: 11px;
   }
 }
+
+.seal-console {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr;
+  border: 1px solid var(--line);
+  margin-top: 15px;
+  background: linear-gradient(120deg, #17202d, #101823);
+}
+.seal-input {
+  padding: 18px 22px;
+  border-right: 1px solid var(--line);
+}
+.seal-keys {
+  display: flex;
+  gap: 16px;
+  font-size: 11px;
+  flex-wrap: wrap;
+}
+.seal-keys span {
+  color: var(--seal);
+}
+.seal-keys kbd {
+  border-color: var(--seal);
+}
+.seal-form {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 16px;
+}
+.seal-form > span {
+  font-size: 10px;
+  color: var(--muted);
+}
+#seal-ring {
+  display: flex;
+  gap: 7px;
+}
+.seal-cell {
+  display: flex;
+  width: 37px;
+  height: 37px;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid var(--seal, #536474);
+  color: var(--seal, #536474);
+  font:
+    20px Georgia,
+    serif;
+  background: #ffffff03;
+}
+#seal-preview {
+  font-size: 11px;
+  color: #b5d2d4;
+  margin-bottom: 0;
+}
+.spell-slots {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 18px;
+}
+.spell-slot {
+  padding: 13px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #354351;
+  background: #0a111a55;
+  position: relative;
+}
+.spell-slot.selected-spell {
+  border-top: 2px solid var(--seal);
+}
+.spell-glyph {
+  font:
+    26px Georgia,
+    serif;
+  color: var(--seal);
+}
+.spell-slot > div {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.spell-slot small {
+  font: 9px monospace;
+  color: var(--muted);
+}
+.spell-slot b {
+  font-size: 12px;
+  color: var(--seal);
+}
+.spell-slot div > span {
+  font-size: 9px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.spell-slot > strong {
+  font: 9px monospace;
+  color: var(--seal);
+  position: absolute;
+  top: 13px;
+  right: 11px;
+}
+.spell-slot > div {
+  padding-top: 5px;
+}
+.menu-actions button small {
+  display: block;
+  margin-top: 9px;
+  color: var(--muted);
+  line-height: 1.8;
+}
+@media (max-width: 1000px) {
+  .seal-console {
+    grid-template-columns: 1fr;
+  }
+  .seal-input {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .spell-slots {
+    padding: 14px;
+  }
+}
+@media (max-width: 600px) {
+  .spell-slots {
+    grid-template-columns: 1fr;
+  }
+  .seal-keys {
+    gap: 12px;
+  }
+  .seal-form {
+    gap: 12px;
+  }
+}

@@ -11,6 +11,8 @@ const files = [
   "action-paths.js",
   "action-morph.js",
   "core.js",
+  "ninjutsu-data.js",
+  "ninjutsu.js",
   "ninja.js",
   "ninja-render.js",
   "ninja-game.js",
@@ -112,7 +114,7 @@ function zip(entries) {
   end.writeUInt32LE(offset, 16);
   return Buffer.concat([...local, directory, end]);
 }
-const instructions = `KAGE//IN — 실행 안내\n\n1. ZIP 압축을 풉니다.\n2. KAGE-IN.html을 Chrome 또는 Edge로 엽니다.\n3. Enter를 눌러 출격합니다. 방향키로 검술 수련장을 선택할 수도 있습니다.\n\n방향키: 이동 / 메뉴 선택\nZ: 공격 (길게 누르기 가능)\nX: 회피\nSpace: 점프 / 공중 추격\nC: 표창 (인술은 다음 업데이트 예정)\nEnter: 확인\nEsc: 일시정지\n\nNode.js, 개발 서버, 인터넷 연결이 필요하지 않습니다.\n`;
+const instructions = `KAGE//IN — 실행 안내\n\n1. ZIP 압축을 풉니다.\n2. KAGE-IN.html을 Chrome 또는 Edge로 엽니다.\n3. Enter를 눌러 출격합니다. 방향키로 검술 수련장을 선택할 수도 있습니다.\n\n방향키: 이동 / 메뉴 선택\nZ: 공격 (길게 누르기 가능)\nX: 회피\nSpace: 점프 / 공중 추격\nA/S/D/F: 화/수/뇌/풍 결인\n같은 인 3개 입력 후 V: 인술 준비\nV (빈 결인): 두 슬롯 교대\nC: 인술 발동 (준비가 없으면 표창)\nEnter: 확인\nEsc: 일시정지\n\n4개 순수 인술만 시전됩니다. 혼합 인술은 다음 업데이트 예정입니다.\n\nNode.js, 개발 서버, 인터넷 연결이 필요하지 않습니다.\n`;
 const archive = zip([
   ["KAGE-IN.html", html],
   ["START.txt", instructions],

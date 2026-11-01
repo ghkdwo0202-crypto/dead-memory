@@ -1,3 +1,4 @@
+import { SEALS, NINJUTSU } from "./ninjutsu-data.js";
 import { NinjaGame, readNinjaRecords } from "./ninja.js";
 import { renderNinja } from "./ninja-render.js";
 import { createStorage } from "./storage.js";
@@ -19,6 +20,9 @@ let game = null,
   lastNotice = "",
   lastAttack = 0;
 const keys = new Set();
+let sealCommands = [];
+let lastSpellLog = 0;
+let sealTutorial = false;
 let pressed = {
   dashPressed: false,
   jumpPressed: false,
@@ -27,6 +31,12 @@ let pressed = {
 };
 function clearInput() {
   keys.clear();
+  sealCommands = [];
+  if (game) {
+    game.pending = {};
+    game.ninjutsu.commands = [];
+    game.ninjutsu.cancelBuffered();
+  }
   pressed = {
     dashPressed: false,
     jumpPressed: false,
@@ -95,14 +105,24 @@ function title() {
   if (game) game.mode = "paused";
   screen = "title";
   menu(
-    `<div class="eyebrow">忍 / SHADOWS IN MOTION</div><h2>KAGE<span style="color:#ed7067">//</span>IN<small>칼끝에서 시작되는 공중 액션</small></h2><p>세 번 베어 띄우고, 공중에서 따라붙는다.<br>찰나의 회피로 빈틈을 만들고, 끊김 없이 다음 적에게.</p><div class="seal-preview" aria-label="속성 결인 다음 업데이트 예정"><span>炎</span><span>水</span><span>雷</span><span>風</span></div><p class="settings-note">지금은 검술·회피·점프를 다듬는 기본 액션 버전입니다.<br>속성 결인과 인술 조합은 다음 업데이트에서 개방됩니다.</p><div class="menu-actions"><button data-menu class="primary" id="start">출격 →</button><button data-menu id="dojo">검술 수련장</button><button data-menu>조작 안내</button></div><p class="menu-hint">↑ ↓ 선택 · ENTER 확인 / PC KEYBOARD</p>`,
-    [() => start(false), () => start(true), help],
+    `<div class="eyebrow">忍 / SHADOWS IN MOTION</div><h2>KAGE<span style="color:#ed7067">//</span>IN<small>칼끝에서 시작되는 공중 액션</small></h2><p>세 번 베어 띄우고, 공중에서 따라붙는다.<br>찰나의 회피로 빈틈을 만들고, 끊김 없이 다음 적에게.</p><div class="seal-preview" aria-label="화 수 뇌 풍 결인"><span>炎</span><span>水</span><span>雷</span><span>風</span></div><p class="settings-note">A A A + V로 화둔 준비, C로 발동.<br>수둔(S×3) · 뇌둔(D×3) · 풍둔(F×3)도 조합하세요.<br>V로 두 기억 슬롯 교대 · 혼합 인술은 다음 업데이트 예정.</p><div class="menu-actions"><button data-menu class="primary" id="start">출격 →</button><button data-menu id="dojo">검술 수련장</button><button data-menu>조작 안내</button><button data-menu>결인 입문 모드: ${sealTutorial ? "켜짐" : "꺼짐"}</button></div><p class="menu-hint">↑ ↓ 선택 · ENTER 확인 / PC KEYBOARD</p>`,
+    [
+      () => start(false),
+      () => start(true),
+      help,
+      () => {
+        sealTutorial = !sealTutorial;
+        title();
+        select(3);
+      },
+    ],
   );
 }
 function start(dojo = false) {
-  game = new NinjaGame({ storage, dojo });
+  game = new NinjaGame({ storage, dojo, sealTutorial });
   lastHUD = -1;
   lastAttack = 0;
+  lastSpellLog = 0;
   lastNotice = "";
   resume();
   hud();
@@ -146,16 +166,35 @@ function help() {
   if (game?.mode === "playing") game.mode = "paused";
   screen = "help";
   menu(
-    `<div class="eyebrow">THE WAY OF THE BLADE</div><h2 class="help-title">손끝에 흐름을.</h2><div class="help-grid"><kbd>↑ ↓ ← →</kbd><span>이동 · 바라보기. WASD 이동은 사용하지 않습니다.</span><kbd>Z</kbd><span>3타 검술 · 홀드 반복. 3타가 작은 적을 띄웁니다.</span><kbd>X</kbd><span>2회 충전 회피. 실제 공격을 피하면 Z 반격 창이 열립니다.<br>검격 활성 중에는 취소할 수 없습니다.</span><kbd>SPACE</kbd><span>점프. 방향키와 함께 누르면 전방의 떠 있는 적을 추격합니다.<br>공중 추격은 한 연계에 1회, 점프 자체에는 무적이 없습니다.</span><kbd>Z → Z</kbd><span>공중 2타 후 짧은 시간 안에 ↓+Z: 착지 격추.<br>↓는 이동키이므로 지상에서는 일반 공격입니다.</span><kbd>C</kbd><span>표창 투척 · 4초 쿨다운. 인술 미개방 버전의 기본 기술.</span><kbd>ESC</kbd><span>일시정지 · 흔들림/광원 효과 설정.</span></div><p class="settings-note">A/S/D/F 결인 · V 인술 준비는 다음 개발 단계입니다.</p><div class="menu-actions"><button data-menu class="primary" id="close-help">알겠습니다 →</button></div>`,
+    `<div class="eyebrow">THE WAY OF THE BLADE</div><h2 class="help-title">손끝에 흐름을.</h2><div class="help-grid"><kbd>↑ ↓ ← →</kbd><span>이동 · 바라보기. WASD 이동은 사용하지 않습니다.</span><kbd>Z</kbd><span>3타 검술 · 홀드 반복. 3타가 작은 적을 띄웁니다.</span><kbd>X</kbd><span>2회 충전 회피. 실제 공격을 피하면 Z 반격 창이 열립니다.<br>검격 활성 중에는 취소할 수 없습니다.</span><kbd>SPACE</kbd><span>점프. 방향키와 함께 누르면 전방의 떠 있는 적을 추격합니다.<br>공중 추격은 한 연계에 1회, 점프 자체에는 무적이 없습니다.</span><kbd>Z → Z</kbd><span>공중 2타 후 짧은 시간 안에 ↓+Z: 착지 격추.<br>↓는 이동키이므로 지상에서는 일반 공격입니다.</span><kbd>C</kbd><span>준비한 인술 발동. 인술이 없으면 4초 쿨다운 표창.</span><kbd>ESC</kbd><span>일시정지 · 흔들림/광원 효과 설정.</span></div><p class="settings-note">A/S/D/F: 화/수/뇌/풍 인. 같은 키 3번 → V 준비 → C 발동.<br>인이 비어 있을 때 V로 두 슬롯 교대. 조합은 순서와 무관합니다.<br>화둔은 지상 전용, 뇌둔은 전방 표적 필요. 두 준비 인술은 쿨다운을 공유하지 않습니다.</p><div class="menu-actions"><button data-menu class="primary" id="close-help">알겠습니다 →</button></div>`,
     [
       () => {
         if (helpReturn === "play") resume();
         else if (helpReturn === "pause") {
           screen = "pause";
           pauseMenu();
-        } else title();
+        } else if (helpReturn === "reward") rewards();
+        else title();
       },
     ],
+  );
+}
+function rewards() {
+  screen = "reward";
+  const names = {
+    health: ["활력 수련", "최대 체력 +20 · 체력 40 회복"],
+    speed: ["경공 수련", "이동 속도 +5% · 최대 +30%"],
+    breath: ["호흡 정돈", "회피 2회 충전 · 남은 인술 대기시간 2초 감소"],
+  };
+  menu(
+    `<div class="eyebrow">LEVEL ${game.level} / REFINE THE FLOW</div><h2 class="help-title">다음 교전을 준비하다.</h2><p>선택하는 동안 전투와 재사용 대기시간이 멈춥니다.</p><div class="menu-actions">${game.rewardChoices.map((r) => `<button data-menu><b>${names[r.id][0]}</b><br><small>${names[r.id][1]}</small></button>`).join("")}</div><p class="menu-hint">↑ ↓ 선택 · ENTER 확인</p>`,
+    game.rewardChoices.map((r, i) => () => {
+      if (game.choose(i)) {
+        if (game.mode === "levelup") rewards();
+        else resume();
+        hud();
+      }
+    }),
   );
 }
 function result() {
@@ -176,6 +215,47 @@ function hud() {
     p.dashes === 2 ? "▰ ▰" : p.dashes === 1 ? "▰ ▱" : "▱ ▱";
   $("special-cd").textContent =
     p.specialAt > game.t ? `${(p.specialAt - game.t).toFixed(1)}s` : "READY";
+  const n = game.ninjutsu,
+    spell = NINJUTSU[n.invoked[0]],
+    preview = n.preview();
+  if (spell)
+    $("special-cd").textContent =
+      (n.cooldowns[spell.id] || 0) > game.t
+        ? `${(n.cooldowns[spell.id] - game.t).toFixed(1)}s`
+        : "READY";
+  document.querySelectorAll(".seal-keys span").forEach((node, i) => {
+    const element = Object.keys(SEALS)[i],
+      open = n.unlocked(element);
+    node.style.opacity = open ? "1" : ".35";
+    node.title = open
+      ? `${SEALS[element].name}인 입력`
+      : `입문 모드: ${element === "lightning" ? 60 : 90}초 뒤 개방`;
+  });
+  $("seal-ring").innerHTML = [0, 1, 2]
+    .map((i) => {
+      const e = SEALS[n.ring[i]];
+      return `<span class="seal-cell" style="--seal:${e?.color || "#536474"}">${e?.glyph || "·"}</span>`;
+    })
+    .join("");
+  $("seal-preview").textContent = preview
+    ? `${preview.name}${preview.implemented ? " · V 준비" : " · 혼합 인술 예정"}`
+    : `${n.ring.length}/3 결인 · 같은 인 세 개를 입력하세요`;
+  $("spell-slots").innerHTML = n.invoked
+    .map((id, i) => {
+      const d = NINJUTSU[id],
+        cd = Math.max(0, (n.cooldowns[id] || 0) - game.t),
+        e = SEALS[d?.element];
+      return `<div class="spell-slot ${i === 0 ? "selected-spell" : ""}" style="--seal:${e?.color || "#536474"}"><span class="spell-glyph">${e?.glyph || "∅"}</span><div><small>${i === 0 ? "C / 발동" : "V / 교대"}</small><b>${d?.name || "빈 기억 슬롯"}</b><span>${d ? d.description : "결인 3개 → V로 준비"}</span></div><strong>${d ? (cd ? cd.toFixed(1) + "s" : "READY") : "—"}</strong></div>`;
+    })
+    .join("");
+  if (n.logs.length !== lastSpellLog) {
+    beep(
+      { fire: 170, water: 290, lightning: 110, wind: 620 }[spell?.element] ||
+        330,
+      0.1,
+    );
+    lastSpellLog = n.logs.length;
+  }
   $("style-rank").textContent = game.styleRank();
   $("style-cue").textContent =
     p.perfectDodgeWindowEnd > game.t
@@ -228,6 +308,11 @@ window.addEventListener("keydown", (e) => {
       "KeyZ",
       "KeyX",
       "KeyC",
+      "KeyA",
+      "KeyS",
+      "KeyD",
+      "KeyF",
+      "KeyV",
       "Space",
       "Escape",
       "Enter",
@@ -252,6 +337,20 @@ window.addEventListener("keydown", (e) => {
   }
   keys.add(code);
   if (!e.repeat) {
+    const element = {
+      KeyA: "fire",
+      KeyS: "water",
+      KeyD: "lightning",
+      KeyF: "wind",
+    }[code];
+    if (element) {
+      sealCommands.push(element);
+      beep(
+        { fire: 340, water: 420, lightning: 580, wind: 720 }[element],
+        0.035,
+      );
+    }
+    if (code === "KeyV") sealCommands.push("invoke");
     if (code === "KeyZ") pressed.attackPressed = true;
     if (code === "KeyX") pressed.dashPressed = true;
     if (code === "Space") pressed.jumpPressed = true;
@@ -276,8 +375,10 @@ function frame(now) {
       left: keys.has("ArrowLeft"),
       right: keys.has("ArrowRight"),
       attack: keys.has("KeyZ"),
+      sealCommands,
       ...pressed,
     });
+    sealCommands = [];
     pressed = {
       dashPressed: false,
       jumpPressed: false,
@@ -289,6 +390,7 @@ function frame(now) {
       lastHUD = game.t;
     }
     if (game.mode === "dead") result();
+    else if (game.mode === "levelup") rewards();
   }
   renderNinja(ctx, screen === "title" ? null : game, now / 1000, {
     shake,

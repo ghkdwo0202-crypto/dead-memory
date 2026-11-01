@@ -1,18 +1,20 @@
 {
   "name": "kage-in",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "scripts": {
     "start": "node scripts/serve.mjs",
     "build:pages": "node scripts/build-pages.mjs",
-    "test": "node tests/combat.test.js && node tests/action-axis.test.js && node tests/morph.test.js && node tests/ninja.test.js",
-    "check": "node --check src/game.js && node --check src/core.js && node --check src/data.js && node --check src/render.js && node --check src/navigation.js && node --check src/storage.js && node --check src/action-paths.js && node --check src/action-morph.js && node --check src/ninja.js && node --check src/ninja-render.js && node --check src/ninja-game.js",
+    "test": "node tests/combat.test.js && node tests/action-axis.test.js && node tests/morph.test.js && node tests/ninja.test.js && node tests/ninjutsu.test.js",
+    "check": "node --check src/game.js && node --check src/core.js && node --check src/data.js && node --check src/render.js && node --check src/navigation.js && node --check src/storage.js && node --check src/action-paths.js && node --check src/action-morph.js && node --check src/ninja.js && node --check src/ninja-render.js && node --check src/ninja-game.js && node --check src/ninjutsu-data.js && node --check src/ninjutsu.js",
     "test:browser": "node scripts/ninja-browser.mjs",
     "build:standalone": "node scripts/build-standalone.mjs",
     "build:download": "node scripts/build-standalone.mjs --release",
     "test:morph-browser": "node scripts/morph-browser.mjs",
-    "test:legacy-browser": "node scripts/browser-smoke.mjs"
+    "test:legacy-browser": "node scripts/browser-smoke.mjs",
+    "test:seals-browser": "node scripts/seals-browser.mjs",
+    "test:offline": "node scripts/standalone-smoke.mjs"
   },
   "engines": {
     "node": ">=22"
