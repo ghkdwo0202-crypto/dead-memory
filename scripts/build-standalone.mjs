@@ -5,17 +5,12 @@ import { deflateRawSync } from "node:zlib";
 const root = new URL("../", import.meta.url);
 const output = new URL(".local/standalone/", root);
 const files = [
-  "data.js",
-  "navigation.js",
   "storage.js",
-  "action-paths.js",
-  "action-morph.js",
-  "core.js",
-  "ninjutsu-data.js",
-  "ninjutsu.js",
-  "ninja.js",
-  "ninja-render.js",
-  "ninja-game.js",
+  "physics2d.js",
+  "side-events.js",
+  "sideview-core.js",
+  "sideview-render.js",
+  "sideview-game.js",
 ];
 let bundle = '"use strict";\n(() => {\nconst modules = Object.create(null);\n';
 
@@ -50,20 +45,20 @@ for (const file of files) {
 bundle += "})();\n";
 
 let html = await readFile(new URL("index.html", root), "utf8");
-const css = await readFile(new URL("src/ninja.css", root), "utf8");
+const css = await readFile(new URL("src/sideview.css", root), "utf8");
 html = html.replace(
-  /<link\s+rel="stylesheet"\s+href="\.\/src\/ninja\.css"\s*\/?>/,
+  /<link\s+rel="stylesheet"\s+href="\.\/src\/sideview\.css"\s*\/?>/,
   () => `<style>${css}</style>`,
 );
 html = html.replace(
-  /<script\s+type="module"\s+src="\.\/src\/ninja-game\.js"><\/script>/,
+  /<script\s+type="module"\s+src="\.\/src\/sideview-game\.js"><\/script>/,
   () => `<script>${bundle.replace(/<\/script/gi, "<\\/script")}</script>`,
 );
 html = html.replace('class="brand" href="./"', 'class="brand" href=""');
 if (html.includes('src="./src/') || html.includes('href="./src/'))
   throw new Error("An external game resource remains");
 await mkdir(output, { recursive: true });
-const file = new URL("KAGE-IN.html", output);
+const file = new URL("KAGE-IN-P3.html", output);
 await writeFile(file, html);
 console.log(`Offline game built: ${fileURLToPath(file)}`);
 
@@ -114,15 +109,16 @@ function zip(entries) {
   end.writeUInt32LE(offset, 16);
   return Buffer.concat([...local, directory, end]);
 }
-const instructions = `KAGE//IN — 실행 안내\n\n1. ZIP 압축을 풉니다.\n2. KAGE-IN.html을 Chrome 또는 Edge로 엽니다.\n3. Enter를 눌러 출격합니다. 방향키로 검술 수련장을 선택할 수도 있습니다.\n\n방향키: 이동 / 메뉴 선택\nZ: 공격 (길게 누르기 가능)\nX: 회피\nSpace: 점프 / 공중 추격\nA/S/D/F: 화/수/뇌/풍 결인\n같은 인 3개 입력 후 V: 인술 준비\nV (빈 결인): 두 슬롯 교대\nC: 인술 발동 (준비가 없으면 표창)\nEnter: 확인\nEsc: 일시정지\n\n4개 순수 인술만 시전됩니다. 혼합 인술은 다음 업데이트 예정입니다.\n\nNode.js, 개발 서버, 인터넷 연결이 필요하지 않습니다.\n`;
+const instructions = `KAGE//IN — 횡스크롤 P3-A/B 실행 안내\n\n압축을 풀고 KAGE-IN-P3.html을 Chrome 또는 Edge로 여세요. Node.js/인터넷이 필요하지 않습니다.\n\n좌우 방향키: 달리기\nSpace: 점프 (길게 누르면 높게)\nZ: 검격 3타 / 홀드 반복\n위+Z: 상향 베기 / 공중 아래+Z: 포고\nX: 회피 (공중 1회)\nC: 근접 피니시 (지상 띄우기 / 공중 격추)\n아래+Space: 일방향 발판 내려가기\nEnter: 메뉴 확인 / Esc: 일시정지\n\nV·기억 슬롯은 사용하지 않습니다. 자동 속성 결인은 후속 P3-C 단계입니다.\n`;
+
 const archive = zip([
-  ["KAGE-IN.html", html],
+  ["KAGE-IN-P3.html", html],
   ["START.txt", instructions],
 ]);
-await writeFile(new URL("KAGE-IN.zip", output), archive);
+await writeFile(new URL("KAGE-IN-P3.zip", output), archive);
 if (process.argv.includes("--release")) {
   const downloads = new URL("downloads/", root);
   await mkdir(downloads, { recursive: true });
-  await writeFile(new URL("KAGE-IN.zip", downloads), archive);
+  await writeFile(new URL("KAGE-IN-P3.zip", downloads), archive);
 }
 console.log(`Download archive built: ${archive.length} bytes`);

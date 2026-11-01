@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0c111b" />
+    <title>KAGE//IN — 그림자를 베고, 하늘로 잇다.</title>
+    <link rel="stylesheet" href="./src/ninja.css" />
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="./"
+        >KAGE<span>//</span>IN<small>SHADOWS IN MOTION</small></a
+      >
+      <nav>
+        <span class="edition">FOUR SEALS / TWO MEMORIES</span
+        ><button id="help">조작 안내</button
+        ><button id="audio" aria-pressed="false">소리 끄기: 켜짐</button>
+      </nav>
+    </header>
+    <main>
+      <section class="intro">
+        <div>
+          <p class="eyebrow">忍 / THE FIRST CUT</p>
+          <h1>그림자를 베고,<br /><em>하늘로 잇다.</em></h1>
+        </div>
+        <p class="intro-copy">
+          접근. 삼연격. 공중 추격.<br />한 번의 회피로, 전투의 흐름을 바꾼다.
+        </p>
+        <div class="chapter">
+          <b>01</b><span>밤의 성문<br />MOONLIT COURTYARD</span>
+        </div>
+      </section>
+      <div class="game-shell">
+        <section class="arena">
+          <canvas
+            id="game"
+            width="1200"
+            height="720"
+            tabindex="0"
+            aria-label="방향키 이동, Z 검격, X 회피, Space 점프와 추격, C 인술, A S D F 결인, V 준비"
+          ></canvas>
+          <div class="arena-top">
+            <span>月影 / NIGHTFALL</span
+            ><span id="enemy-count">검술 · 회피 · 공중 연계</span>
+          </div>
+          <div id="notice" class="notice hidden" aria-live="polite"></div>
+          <div id="overlay" class="overlay"></div>
+          <div class="arena-bottom">
+            <span id="objective">Z · 3타로 띄우고 Space로 추격하세요.</span
+            ><span>ESC / PAUSE</span>
+          </div>
+        </section>
+        <aside>
+          <section class="vitals">
+            <div class="label">SHINOBI <span id="hp-text">120 / 120</span></div>
+            <div class="track"><i id="hp-fill"></i></div>
+            <div class="stat">
+              <span>회피 <kbd>X</kbd></span
+              ><b id="dashes">▰ ▰</b>
+            </div>
+            <div class="stat">
+              <span>인술 <kbd>C</kbd></span
+              ><b id="special-cd">READY</b>
+            </div>
+          </section>
+          <section class="style-panel">
+            <div class="label">COMBAT STYLE</div>
+            <div id="style-rank">D</div>
+            <span id="style-cue">다양한 액션으로 흐름을 이어가세요.</span>
+          </section>
+          <section>
+            <div class="label">MOMENTUM / 기세</div>
+            <div id="momentum">○ ○ ○</div>
+            <p class="subtle">
+              검격 3회 명중마다 1칸.<br />기세가 높으면 공중 추격 거리가
+              늘어납니다.
+            </p>
+          </section>
+          <section>
+            <div class="label">AIR STATE / 공중</div>
+            <b id="air-state">지상</b>
+            <div class="track air"><i id="air-fill"></i></div>
+            <p class="subtle">
+              Z3 띄우기 → 방향키 + Space<br />공중 Z 2타 → ↓ + Z 격추
+            </p>
+          </section>
+          <section class="mission-stats">
+            <div><span id="kills">000</span>처치</div>
+            <div><span id="time">00:00</span>교전 시간</div>
+          </section>
+        </aside>
+      </div>
+      <section class="seal-console" aria-label="결인과 인술 기억">
+        <div class="seal-input">
+          <div class="label">THREE SEALS / 결인</div>
+          <div class="seal-keys">
+            <span style="--seal: #ff926c"><kbd>A</kbd> 炎 화</span
+            ><span style="--seal: #7cbfff"><kbd>S</kbd> 水 수</span
+            ><span style="--seal: #ead692"><kbd>D</kbd> 雷 뇌</span
+            ><span style="--seal: #a7e8ce"><kbd>F</kbd> 風 풍</span>
+          </div>
+          <div class="seal-form">
+            <div id="seal-ring">
+              <span class="seal-cell">·</span><span class="seal-cell">·</span
+              ><span class="seal-cell">·</span>
+            </div>
+            <span><kbd>V</kbd> 준비 / 빈 결인일 때 교대</span>
+          </div>
+          <p id="seal-preview" aria-live="polite">
+            0/3 결인 · 같은 인 세 개를 입력하세요
+          </p>
+        </div>
+        <div id="spell-slots" class="spell-slots"></div>
+      </section>
+      <section class="input-strip">
+        <div><kbd>↑↓←→</kbd> 이동</div>
+        <div><kbd>Z</kbd> 검격 · 홀드 반복</div>
+        <div><kbd>X</kbd> 회피 · 2회 충전</div>
+        <div><kbd>SPACE</kbd> 점프 / 공중 추격</div>
+        <div><kbd>C</kbd> 인술 / 표창</div>
+        <div><kbd>ESC</kbd> 일시정지</div>
+      </section>
+      <footer>
+        <span>검술 + 순수 인술 4종 개방 · 혼합 인술은 다음 업데이트 예정.</span
+        ><span>NO MOUSE. JUST FLOW. <i>✦</i></span>
+      </footer>
+    </main>
+    <script type="module" src="./src/ninja-game.js"></script>
+  </body>
+</html>

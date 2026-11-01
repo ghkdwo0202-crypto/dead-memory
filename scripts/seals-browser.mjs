@@ -8,7 +8,7 @@ const browser = await chromium.launch({
   headless: true,
   args: ["--no-sandbox", "--disable-dev-shm-usage"],
 });
-const url = process.env.GAME_URL || "http://127.0.0.1:3000",
+const url = process.env.GAME_URL || "http://127.0.0.1:3000/p2.html",
   errors = [];
 const snap = (p) => p.evaluate(() => window.kageIn.snapshot());
 async function pressSeals(p, key) {

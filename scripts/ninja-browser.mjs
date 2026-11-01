@@ -9,7 +9,7 @@ const browser = await chromium.launch({
   args: ["--no-sandbox", "--disable-dev-shm-usage"],
 });
 const errors = [],
-  url = process.env.GAME_URL || "http://127.0.0.1:3000";
+  url = process.env.GAME_URL || "http://127.0.0.1:3000/p2.html";
 const snap = (p) => p.evaluate(() => window.kageIn.snapshot());
 try {
   await mkdir(".local/browser/ninja", { recursive: true });
