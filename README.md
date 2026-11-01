@@ -2,7 +2,15 @@
 
 이전 회차의 자신이 다음 회차의 추적자가 되는 2D 탑뷰 액션 로그라이크의 플레이 가능한 초벌입니다. PC 키보드·마우스로 플레이하는 JavaScript + Canvas 프로토타입이며, 게임 실행에는 외부 패키지·API 키·외부 에셋이 필요하지 않습니다.
 
-## 실행
+## 설치 없이 플레이 (GitHub Pages)
+
+Pages 배포가 완료되면 **https://ghkdwo0202-crypto.github.io/dead-memory/** 에서 바로 플레이합니다. 플레이어는 Node.js나 파일 다운로드가 필요하지 않습니다. PC 키보드와 마우스를 사용하세요.
+
+`main`에 푸시하면 `Deploy game to GitHub Pages` 워크플로가 테스트 후 게임 파일만 배포합니다. 진행 상황은 저장소의 **Actions**에서 확인합니다. 자동 사이트 생성이 권한 문제로 실패하면 저장소의 **Settings → Pages → Build and deployment → Source**를 **GitHub Actions**로 설정하고, Actions에서 해당 워크플로를 다시 실행하세요. 클라우드 환경 게시와는 별개입니다.
+
+로컬 정적 배포 파일은 `npm run build:pages`로 `.local/pages/`에 생성합니다. 이 폴더에는 게임 HTML·JS·CSS만 포함됩니다. 사망 기록은 접속 주소별 브라우저 저장소에 유지되므로 로컬에서 플레이한 기록이 Pages로 이전되지는 않습니다.
+
+## 개발용 로컬 실행
 
 Node.js 22 이상(검증: 24.19.0)에서:
 
