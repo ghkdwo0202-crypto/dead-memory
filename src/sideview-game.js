@@ -1,3 +1,5 @@
+import { ELEMENT_KEYS, ELEMENTS } from "./seals.js";
+import { SIDE_SKILLS, RECIPE_IDS } from "./side-skills.js";
 import { SideGame } from "./sideview-core.js";
 import { renderSide } from "./sideview-render.js";
 import { createStorage } from "./storage.js";
@@ -18,9 +20,12 @@ let game = null,
   helpReturn = "title";
 const keys = new Set();
 let edges = {};
+let elementEdges = [];
 function clear() {
   keys.clear();
   edges = {};
+  elementEdges = [];
+  if (game) game.magic.events = [];
   if (game) game.pending = {};
 }
 function beep(f = 300) {
@@ -70,7 +75,7 @@ function title() {
   if (game) game.mode = "paused";
   screen = "title";
   menu(
-    `<div class="eyebrow">月影 / BLADE UNDER THE MOON</div><h2>KAGE<span style="color:#ed756a">//</span>IN<small>월하 성문</small></h2><p>성벽을 딛고 뛰어오르고, 아래로 베어 다시 날아오른다.<br>적의 공격을 간파한 찰나에, 반격의 칼날을 올려라.</p><p>실제 점프와 발판이 있는 횡스크롤 액션 버전입니다.<br>C는 근접 피니시입니다. V·기억 슬롯은 사용하지 않습니다.<br>속성 자동 결인은 다음 단계에서 추가됩니다.</p><div class="menu-actions"><button data-menu class="primary" id="start">성문 돌파 →</button><button data-menu>검술 수련장</button><button data-menu>조작 안내</button></div><p class="menu-hint">↑ ↓ 선택 · ENTER 확인</p>`,
+    `<div class="eyebrow">月影 / BLADE UNDER THE MOON</div><h2>KAGE<span style="color:#ed756a">//</span>IN<small>월하 성문</small></h2><p>성벽을 딛고 뛰어오르고, 아래로 베어 다시 날아오른다.<br>적의 공격을 간파한 찰나에, 반격의 칼날을 올려라.</p><p>실제 점프와 발판이 있는 횡스크롤 액션 버전입니다.<br>C는 근접 피니시입니다. V·기억 슬롯은 사용하지 않습니다.<br>A/S/D/F: 첫 인은 기본기, 셋째 인은 자동 인술.<br>상위 화·수·뇌·풍과 화수뇌 혼합까지 사용할 수 있습니다.</p><div class="menu-actions"><button data-menu class="primary" id="start">성문 돌파 →</button><button data-menu>검술 수련장</button><button data-menu>조작 안내</button></div><p class="menu-hint">↑ ↓ 선택 · ENTER 확인</p>`,
     [() => start("run"), () => start("dojo"), help],
   );
 }
@@ -119,7 +124,7 @@ function help() {
   if (game?.mode === "playing") game.mode = "paused";
   screen = "help";
   menu(
-    `<div class="eyebrow">FOOTWORK / STEEL / TIMING</div><h2 class="compact">성벽 위의 검술.</h2><div class="help-grid"><kbd>← →</kbd><span>좌우 달리기 · 바라보기. ↑는 조준, ↓는 공중 빠른 낙하.</span><kbd>SPACE</kbd><span>실제 점프. 길게 누르면 높이 뜁니다.<br>발판 끝 직후에도 점프 가능. 일방향 발판에서는 ↓+Space로 내려가기.</span><kbd>Z</kbd><span>지상 3타 / 공중 2타. 홀드 반복.<br>↑+Z 상향 베기, 공중 ↓+Z 적중 시 포고 반동 점프.</span><kbd>X</kbd><span>회피 2충전, 공중에서는 착지 전 1회.<br>벽을 뚫지 않습니다. X 직후 Z는 짧은 돌파 베기.</span><kbd>C</kbd><span>지상 상향 발도 / 공중 하향 격추. 2.8초 쿨다운.<br>실제 공격 회피 성공 시 0.55초 동안 반격 피니시 강화.</span><kbd>ESC</kbd><span>정지·흔들림/광원 효과 설정. V는 사용하지 않습니다.</span></div><div class="menu-actions"><button data-menu class="primary" id="close-help">알겠습니다 →</button></div>`,
+    `<div class="eyebrow">FOOTWORK / STEEL / TIMING</div><h2 class="compact">성벽 위의 검술.</h2><div class="help-grid"><kbd>← →</kbd><span>좌우 달리기 · 바라보기. ↑는 조준, ↓는 공중 빠른 낙하.</span><kbd>SPACE</kbd><span>실제 점프. 길게 누르면 높이 뜁니다.<br>발판 끝 직후에도 점프 가능. 일방향 발판에서는 ↓+Space로 내려가기.</span><kbd>Z</kbd><span>지상 3타 / 공중 2타. 홀드 반복.<br>↑+Z 상향 베기, 공중 ↓+Z 적중 시 포고 반동 점프.</span><kbd>X</kbd><span>회피 2충전, 공중에서는 착지 전 1회.<br>벽을 뚫지 않습니다. X 직후 Z는 짧은 돌파 베기.</span><kbd>C</kbd><span>지상 상향 발도 / 공중 하향 격추. 2.8초 쿨다운.<br>실제 공격 회피 성공 시 0.55초 동안 반격 피니시 강화.</span><kbd>A/S/D/F</kbd><span>화/수/뇌/풍. 첫 인 기본기 → 둘째 조합 → 셋째 자동 시전.<br>인 사이 0.75초 이내. 같은 인 3회, 또는 A/S/D 3속성 혼합.<br>키 홀드는 결인 반복이 아닙니다. 나머지 혼합 15종은 개발 예정입니다.</span><kbd>ESC</kbd><span>정지·흔들림/광원 효과 설정. V는 사용하지 않습니다.</span></div><div class="menu-actions"><button data-menu class="primary" id="close-help">알겠습니다 →</button></div>`,
     [
       () => {
         if (helpReturn === "play") resume();
@@ -182,6 +187,43 @@ function hud() {
     `${String(Math.floor(game.t / 60)).padStart(2, "0")}:${String(Math.floor(game.t % 60)).padStart(2, "0")}`;
   $("enemy-count").textContent =
     `${game.demo === "dojo" ? "TRAINING" : "HOSTILES"} / ${game.enemies.length}`;
+  const magic = game.magic,
+    state = magic.sequence;
+  $("seal-ring").innerHTML = [0, 1, 2]
+    .map((i) => {
+      const e = ELEMENTS[state.seals[i]];
+      return `<span style="--element:${e?.color || "#536778"}">${e?.glyph || "·"}</span>`;
+    })
+    .join("");
+  $("seal-time").style.width =
+    `${Math.max(0, Math.min(100, ((state.expiresAt - game.t) / 0.75) * 100))}%`;
+  $("seal-preview").textContent =
+    state.seals.length === 2
+      ? state
+          .possible()
+          .map(
+            (r) =>
+              `${SIDE_SKILLS[RECIPE_IDS[r]].name}${SIDE_SKILLS[RECIPE_IDS[r]].implemented ? "" : " (예정)"}`,
+          )
+          .join(" · ")
+      : state.seals.length === 1
+        ? "두 번째 인은 조합만 · 세 번째에 자동 시전"
+        : magic.feedback || "A/S/D/F 한 번: 기본 인술 · 3개: 자동 조합";
+  $("single-cds").innerHTML = Object.entries(ELEMENTS)
+    .map(([element, e]) => {
+      const cd = Math.max(
+        0,
+        (magic.cooldowns["SINGLE_" + element.toUpperCase()] || 0) - game.t,
+      );
+      return `<span style="color:${e.color}">${e.glyph} ${cd ? cd.toFixed(1) + "s" : "READY"}</span>`;
+    })
+    .join("");
+  const mixed = magic.logs
+    .filter((e) => SIDE_SKILLS[e.id].kind === "mixed")
+    .at(-1);
+  $("mixed-cd").textContent = mixed
+    ? `${SIDE_SKILLS[mixed.id].name} · ${Math.max(0, magic.cooldowns[mixed.id] - game.t).toFixed(1)}s`
+    : "기본기 CD 1초 · 조합 CD 별도";
   const n = game.notifications.at(-1);
   $("notice").classList.toggle("hidden", !n);
   if (n) {
@@ -208,6 +250,10 @@ window.addEventListener("keydown", (e) => {
       "KeyZ",
       "KeyX",
       "KeyC",
+      "KeyA",
+      "KeyS",
+      "KeyD",
+      "KeyF",
       "Enter",
       "Escape",
     ].includes(e.code)
@@ -231,6 +277,7 @@ window.addEventListener("keydown", (e) => {
   }
   keys.add(e.code);
   if (!e.repeat) {
+    if (ELEMENT_KEYS[e.code]) elementEdges.push(ELEMENT_KEYS[e.code]);
     if (e.code === "Space") edges.jumpPressed = true;
     if (e.code === "KeyX") edges.dashPressed = true;
     if (e.code === "KeyZ") edges.attackPressed = true;
@@ -260,9 +307,11 @@ function frame(now) {
       down: keys.has("ArrowDown"),
       attack: keys.has("KeyZ"),
       jumpHeld: keys.has("Space"),
+      elements: elementEdges,
       ...edges,
     });
     edges = {};
+    elementEdges = [];
     if (game.t - lastHUD > 0.075 || game.mode !== "playing") {
       hud();
       lastHUD = game.t;
@@ -282,7 +331,7 @@ window.kageIn = {
     selection,
     shake,
     lowFlash,
-    ...(game?.snapshot() || { mode: "title", phase: "P3-A/B" }),
+    ...(game?.snapshot() || { mode: "title", phase: "P3-A-C" }),
   }),
 };
 title();

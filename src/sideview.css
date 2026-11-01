@@ -446,3 +446,71 @@ footer i {
     gap: 9px;
   }
 }
+
+.seals-hud {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  border: 1px solid var(--line);
+  margin-top: 14px;
+  background: #14202d;
+}
+.seals-hud > div {
+  padding: 18px 22px;
+}
+.seals-hud > div + div {
+  border-left: 1px solid var(--line);
+}
+.seal-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.seal-row > span {
+  font-size: 11px;
+  color: var(--dim);
+  line-height: 2;
+}
+#seal-ring {
+  display: flex;
+  gap: 6px;
+}
+#seal-ring span {
+  display: grid;
+  place-items: center;
+  width: 35px;
+  height: 35px;
+  border: 1px solid var(--element, #536778);
+  color: var(--element, #536778);
+  font: 20px serif;
+}
+.seal-track {
+  max-width: 117px;
+  height: 2px;
+  margin-top: 7px;
+}
+.seal-track i {
+  background: var(--cyan);
+  width: 0;
+}
+#single-cds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  font: 10px monospace;
+  padding-top: 7px;
+}
+.seals-hud p {
+  color: #a8c2cd;
+  font-size: 10px;
+  line-height: 1.8;
+  margin-bottom: 0;
+}
+@media (max-width: 800px) {
+  .seals-hud {
+    grid-template-columns: 1fr;
+  }
+  .seals-hud > div + div {
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+}

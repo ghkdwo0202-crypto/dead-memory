@@ -8,6 +8,9 @@ const files = [
   "storage.js",
   "physics2d.js",
   "side-events.js",
+  "seals.js",
+  "side-skills.js",
+  "side-magic.js",
   "sideview-core.js",
   "sideview-render.js",
   "sideview-game.js",
@@ -109,7 +112,7 @@ function zip(entries) {
   end.writeUInt32LE(offset, 16);
   return Buffer.concat([...local, directory, end]);
 }
-const instructions = `KAGE//IN — 횡스크롤 P3-A/B 실행 안내\n\n압축을 풀고 KAGE-IN-P3.html을 Chrome 또는 Edge로 여세요. Node.js/인터넷이 필요하지 않습니다.\n\n좌우 방향키: 달리기\nSpace: 점프 (길게 누르면 높게)\nZ: 검격 3타 / 홀드 반복\n위+Z: 상향 베기 / 공중 아래+Z: 포고\nX: 회피 (공중 1회)\nC: 근접 피니시 (지상 띄우기 / 공중 격추)\n아래+Space: 일방향 발판 내려가기\nEnter: 메뉴 확인 / Esc: 일시정지\n\nV·기억 슬롯은 사용하지 않습니다. 자동 속성 결인은 후속 P3-C 단계입니다.\n`;
+const instructions = `KAGE//IN — 횡스크롤 P3-A-C 실행 안내\n\n압축을 풀고 KAGE-IN-P3.html을 Chrome 또는 Edge로 여세요. Node.js/인터넷이 필요하지 않습니다.\n\n좌우 방향키: 달리기\nSpace: 점프 (길게 누르면 높게)\nZ: 검격 3타 / 홀드 반복\n위+Z: 상향 베기 / 공중 아래+Z: 포고\nX: 회피 (공중 1회)\nC: 근접 피니시 (지상 띄우기 / 공중 격추)\n아래+Space: 일방향 발판 내려가기\nEnter: 메뉴 확인 / Esc: 일시정지\n\nV·기억 슬롯은 사용하지 않습니다. A/S/D/F: 화/수/뇌/풍, 첫 인은 기본기·셋째 인은 자동 시전.\n상위 화/수/뇌/풍과 화수뇌 혼합 1종까지 구현, 나머지 15종은 후속 단계입니다.\n`;
 
 const archive = zip([
   ["KAGE-IN-P3.html", html],

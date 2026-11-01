@@ -76,6 +76,27 @@
           </section>
         </aside>
       </div>
+      <section class="seals-hud" aria-label="즉시 결인 인술">
+        <div>
+          <div class="label">FIRST SEAL / 기본기 → THIRD SEAL / 자동 인술</div>
+          <div class="seal-row">
+            <div id="seal-ring"><span>·</span><span>·</span><span>·</span></div>
+            <span
+              ><kbd>A</kbd> 炎 화 <kbd>S</kbd> 水 수 <kbd>D</kbd> 雷 뇌
+              <kbd>F</kbd> 風 풍</span
+            >
+          </div>
+          <div class="track seal-track"><i id="seal-time"></i></div>
+          <p id="seal-preview">
+            0.75초 안에 세 인을 잇는다 · V/C로 시전하지 않습니다.
+          </p>
+        </div>
+        <div>
+          <div class="label">INDEPENDENT COOLDOWNS</div>
+          <div id="single-cds"></div>
+          <p id="mixed-cd">기본기 CD 1초 · 조합 CD 별도</p>
+        </div>
+      </section>
       <section class="controls">
         <span><kbd>← →</kbd> 달리기</span
         ><span><kbd>SPACE</kbd> 점프 · 길게 높이</span
@@ -84,9 +105,7 @@
         ><span><kbd>↑ / ↓</kbd> 조준 / 빠른 낙하</span>
       </section>
       <footer>
-        <span
-          >플랫폼 검술과 공중 연계를 다듬는 버전 · 속성 자동 결인은 다음
-          단계입니다.</span
+        <span>실제 중력·발판 검술 · 단일 즉발 4종 + 자동 조합 5종 개방</span
         ><span>NO MOUSE. JUST FLOW. <i>✦</i></span>
       </footer>
     </main>

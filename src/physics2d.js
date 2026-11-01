@@ -160,8 +160,8 @@ export function jumpBody(b, now, platforms, { down = false } = {}) {
   return "buffer";
 }
 export function clearLine(a, b, platforms) {
-  const n = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.y - a.y) / 4));
-  for (let i = 1; i < n; i++) {
+  const n = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.y - a.y) / 2));
+  for (let i = 0; i <= n; i++) {
     const x = a.x + ((b.x - a.x) * i) / n,
       y = a.y + ((b.y - a.y) * i) / n;
     if (

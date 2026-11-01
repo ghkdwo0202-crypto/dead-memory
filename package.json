@@ -6,8 +6,8 @@
   "scripts": {
     "start": "node scripts/serve.mjs",
     "build:pages": "node scripts/build-pages.mjs",
-    "test": "node tests/combat.test.js && node tests/action-axis.test.js && node tests/morph.test.js && node tests/ninja.test.js && node tests/ninjutsu.test.js && node tests/physics2d.test.js && node tests/sideview.test.js",
-    "check": "node --check src/game.js && node --check src/core.js && node --check src/data.js && node --check src/render.js && node --check src/navigation.js && node --check src/storage.js && node --check src/action-paths.js && node --check src/action-morph.js && node --check src/ninja.js && node --check src/ninja-render.js && node --check src/ninja-game.js && node --check src/ninjutsu-data.js && node --check src/ninjutsu.js && node --check src/physics2d.js && node --check src/side-events.js && node --check src/sideview-core.js && node --check src/sideview-render.js && node --check src/sideview-game.js",
+    "test": "node tests/combat.test.js && node tests/action-axis.test.js && node tests/morph.test.js && node tests/ninja.test.js && node tests/ninjutsu.test.js && node tests/physics2d.test.js && node tests/sideview.test.js && node tests/side-seals.test.js",
+    "check": "node --check src/game.js && node --check src/core.js && node --check src/data.js && node --check src/render.js && node --check src/navigation.js && node --check src/storage.js && node --check src/action-paths.js && node --check src/action-morph.js && node --check src/ninja.js && node --check src/ninja-render.js && node --check src/ninja-game.js && node --check src/ninjutsu-data.js && node --check src/ninjutsu.js && node --check src/physics2d.js && node --check src/side-events.js && node --check src/sideview-core.js && node --check src/sideview-render.js && node --check src/sideview-game.js && node --check src/seals.js && node --check src/side-skills.js && node --check src/side-magic.js",
     "test:browser": "node scripts/sideview-browser.mjs",
     "build:standalone": "node scripts/build-standalone.mjs",
     "build:download": "node scripts/build-standalone.mjs --release",
@@ -17,7 +17,8 @@
     "test:offline": "node scripts/sideview-offline.mjs",
     "test:p2-browser": "node scripts/ninja-browser.mjs",
     "build:p2": "node scripts/build-p2.mjs",
-    "test:p2-offline": "node scripts/standalone-smoke.mjs"
+    "test:p2-offline": "node scripts/standalone-smoke.mjs",
+    "test:auto-seals-browser": "node scripts/side-seals-browser.mjs"
   },
   "engines": {
     "node": ">=22"

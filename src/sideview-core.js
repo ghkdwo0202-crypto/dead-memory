@@ -1,3 +1,4 @@
+import { SideMagic } from "./side-magic.js";
 import {
   PHYSICS,
   WORLD,
@@ -90,6 +91,7 @@ export class SideGame {
       received: new Map(),
       evaded: new Set(),
     };
+    this.magic = new SideMagic(this);
     this.recentKinds = [];
     this.lastActionAt = 0;
     this.pendingJumpHeld = false;
@@ -185,6 +187,8 @@ export class SideGame {
       return false;
     if (p.attack && this.t < p.attack.activeAt + p.attack.duration)
       return false;
+    if (this.magic.cast && !this.magic.cast.executed) return false;
+    if (this.magic.cast) this.magic.cast = null;
     const facing = input.left ? -1 : input.right ? 1 : p.facing;
     p.facing = facing;
     p.attack = null;
@@ -210,7 +214,7 @@ export class SideGame {
     const p = this.player;
     if (p.dead || p.staggerUntil > this.t || p.dashUntil > this.t) return false;
     if (finisher && p.finisherAt > this.t) return false;
-    if (p.attack) {
+    if (this.magic.cast || p.attack) {
       if (!p.attackBuffer || finisher)
         p.attackBuffer = {
           finisher,
@@ -361,7 +365,7 @@ export class SideGame {
     e.launchUntil = Math.min(e.launchUntil || this.t + 1, this.t + 1);
     return true;
   }
-  damage(source, target, amount, id, { stagger = 0.12 } = {}) {
+  damage(source, target, amount, id, { stagger = 0.12, quiet = false } = {}) {
     if (target.dead || target.received.has(id) || target.evaded.has(id))
       return 0;
     if (
@@ -395,8 +399,15 @@ export class SideGame {
       text: Math.ceil(actual),
       born: this.t,
     });
-    this.events.emit("OnHit", { source, target, amount: actual, attackId: id });
+    if (!quiet)
+      this.events.emit("OnHit", {
+        source,
+        target,
+        amount: actual,
+        attackId: id,
+      });
     if (target === this.player) {
+      this.magic.interrupt();
       target.attack = null;
       target.attackBuffer = null;
       target.hurtUntil = this.t + 0.5;
@@ -404,8 +415,8 @@ export class SideGame {
       target.vx = (target.x >= source.x ? 1 : -1) * 220;
       target.vy = -170;
     }
-    this.hitstop = Math.max(this.hitstop, 0.045);
-    this.shakeUntil = this.t + 0.12;
+    if (!quiet) this.hitstop = Math.max(this.hitstop, 0.045);
+    if (!quiet) this.shakeUntil = this.t + 0.12;
     this.shakeStrength = ["elite", "boss"].includes(target.type) ? 4 : 2;
     if (target.hp <= 0) {
       target.dead = true;
@@ -474,15 +485,19 @@ export class SideGame {
         e.telegraph = null;
         e.nextAttack = this.t + (e.type === "elite" ? 1.8 : 1.1);
         if (a.kind === "throw") {
-          if(this.projectiles.length<200)this.projectiles.push({
-            id: a.id,
-            x: e.x,
-            y: e.y - 7,
-            vx: Math.cos(a.angle) * 330,
-            vy: Math.sin(a.angle) * 330,
-            owner: e,
-            life: 1.5,
-          });
+          if (
+            this.projectiles.length + this.magic.bolts.length <
+            200 - this.magic.reserved()
+          )
+            this.projectiles.push({
+              id: a.id,
+              x: e.x,
+              y: e.y - 7,
+              vx: Math.cos(a.angle) * 330,
+              vy: Math.sin(a.angle) * 330,
+              owner: e,
+              life: 1.5,
+            });
         } else {
           const box = {
             x: e.x + a.facing * a.range * 0.5,
@@ -566,6 +581,7 @@ export class SideGame {
           up: input.up,
           down: input.down,
         };
+    this.magic.enqueue(input.elements || []);
     this.accumulator += Math.min(0.1, Math.max(0, dt));
     this.input = input;
     while (this.accumulator + 1e-9 >= PHYSICS.step) {
@@ -600,6 +616,7 @@ export class SideGame {
     if (edges.finisherPressed) this.requestSword(edges.finisherPressed, true);
     if (input.attack || edges.attackPressed)
       this.requestSword(edges.attackPressed || input);
+    this.magic.input();
     const dashing = p.dashUntil > this.t;
     if (dashing) {
       p.vx = p.facing * 620;
@@ -647,6 +664,17 @@ export class SideGame {
         }
       }
     }
+    this.magic.tick(dt);
+    if (
+      !p.attack &&
+      !this.magic.cast &&
+      p.attackBuffer &&
+      p.dashUntil <= this.t
+    ) {
+      const b = p.attackBuffer;
+      p.attackBuffer = null;
+      if (b.until >= this.t) this.requestSword(b.input, b.finisher);
+    }
     if (p.rechargeAt && this.t >= p.rechargeAt) {
       p.dashes = Math.min(2, p.dashes + 1);
       p.rechargeAt = p.dashes < 2 ? this.t + 2.3 : 0;
@@ -685,7 +713,7 @@ export class SideGame {
       }
       b.life -= dt;
     }
-    this.projectiles = this.projectiles.filter((b) => b.life > 0).slice(-200);
+    this.projectiles = this.projectiles.filter((b) => b.life > 0);
     if (p.y > 1390) this.respawn();
     if (this.demo === "run") {
       if (p.grounded && p.x > 1030 && p.x < 1170)
@@ -743,7 +771,7 @@ export class SideGame {
   snapshot() {
     const p = this.player;
     return {
-      phase: "P3-A/B",
+      phase: "P3-A-C",
       mode: this.mode,
       time: this.t,
       demo: this.demo,
@@ -753,6 +781,7 @@ export class SideGame {
       xp: this.xp,
       rewardChoices: [...this.rewardChoices],
       style: this.styleRank(),
+      magic: this.magic.snapshot(),
       player: { ...p, received: undefined, evaded: undefined },
       enemies: this.enemies.map((e) => ({
         id: e.id,
@@ -766,6 +795,7 @@ export class SideGame {
         telegraph: e.telegraph,
         staggerMeter: e.staggerMeter,
         airJuggleHits: e.airJuggleHits,
+        elements: e.elements,
       })),
       effects: this.effects.map((e) => ({ type: e.type, x: e.x, y: e.y })),
       projectiles: this.projectiles.map((b) => ({ x: b.x, y: b.y })),

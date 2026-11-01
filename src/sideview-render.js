@@ -1,3 +1,4 @@
+import { ELEMENTS } from "./seals.js";
 import { WORLD, surfaceBelow } from "./physics2d.js";
 const TAU = Math.PI * 2;
 function line(c, points, color, width = 1) {
@@ -139,6 +140,16 @@ function ninja(c, a, t, ghost = false) {
     c.strokeRect(-14, -26, 28, 52);
   }
   c.restore();
+  for (const [type, status] of Object.entries(a.elements || {})) {
+    const e =
+      ELEMENTS[
+        { burn: "fire", wet: "water", shock: "lightning", wind: "wind" }[type]
+      ];
+    if (!e) continue;
+    c.fillStyle = e.color;
+    c.font = "12px serif";
+    c.fillText(e.glyph, a.x - 5, a.y - 44);
+  }
   if (!ghost && a.hp < a.maxHP) {
     c.fillStyle = "#272d3a";
     c.fillRect(a.x - 19, a.y - 38, 38, 3);
@@ -262,6 +273,27 @@ export function renderSide(
         ninja(c, { ...p, x: e.x, y: e.y, facing: e.facing }, t, true);
     for (const e of g.enemies) if (!e.dead) ninja(c, e, t);
     if (!p.dead) ninja(c, p, t);
+    for (const b of g.magic.bolts) {
+      const color = ELEMENTS[b.element].color;
+      c.save();
+      c.translate(b.x, b.y);
+      c.rotate(b.angle);
+      c.strokeStyle = color;
+      c.lineWidth = b.op.op === "Wave" ? 14 : 4;
+      c.beginPath();
+      c.arc(0, 0, b.op.op === "Wave" ? 24 : 13, -1.2, 1.2);
+      c.stroke();
+      line(
+        c,
+        [
+          [-22, 0],
+          [5, 0],
+        ],
+        color + "88",
+        2,
+      );
+      c.restore();
+    }
     for (const b of g.projectiles) {
       line(
         c,
@@ -277,7 +309,75 @@ export function renderSide(
       const q = (t - e.born) / e.life;
       c.save();
       c.globalAlpha = 1 - q;
-      if (e.type === "slash" || e.type === "hostile-slash") {
+      if (e.type === "seal" || e.type === "cast") {
+        const element = ELEMENTS[e.element];
+        c.fillStyle = element.color;
+        c.font = "bold 20px serif";
+        c.fillText(element.glyph, e.x - 7, e.y - 20 - q * 14);
+        if (e.type === "cast") {
+          c.strokeStyle = element.color;
+          c.beginPath();
+          c.arc(e.x, e.y, 20 + q * 15, 0, TAU);
+          c.stroke();
+        }
+      } else if (e.type === "magic-line") {
+        const color = ELEMENTS[e.element].color;
+        line(
+          c,
+          [
+            [e.x, e.y],
+            [
+              e.x + Math.cos(e.angle) * e.range,
+              e.y + Math.sin(e.angle) * e.range,
+            ],
+          ],
+          color,
+          e.element === "water" ? 7 : 3,
+        );
+      } else if (e.type === "lightning") {
+        line(
+          c,
+          [
+            [e.x - 15, e.y - 160],
+            [e.x + 8, e.y - 110],
+            [e.x - 9, e.y - 75],
+            [e.x + 10, e.y - 45],
+            [e.x, e.y],
+          ],
+          "#f7deb0",
+          lowFlash ? 3 : 5,
+        );
+      } else if (e.type === "fireburst" || e.type === "detonation") {
+        const color = e.type === "fireburst" ? "#ff986f" : "#f0d18c";
+        c.strokeStyle = color;
+        c.lineWidth = 5;
+        c.beginPath();
+        c.ellipse(
+          e.x,
+          e.y,
+          e.range * (0.3 + q * 0.7),
+          e.range * 0.65 * (0.3 + q * 0.7),
+          0,
+          0,
+          TAU,
+        );
+        c.stroke();
+        for (let i = 0; i < 7; i++) {
+          const a = (i * TAU) / 7;
+          line(
+            c,
+            [
+              [e.x + Math.cos(a) * 20, e.y + Math.sin(a) * 20],
+              [
+                e.x + Math.cos(a) * e.range * q,
+                e.y + Math.sin(a) * e.range * q * 0.65,
+              ],
+            ],
+            color,
+            2,
+          );
+        }
+      } else if (e.type === "slash" || e.type === "hostile-slash") {
         const angle =
             e.dir === "up"
               ? -Math.PI / 2

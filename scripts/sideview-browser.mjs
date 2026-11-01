@@ -41,7 +41,7 @@ try {
   await p.keyboard.down("ArrowUp");
   await p.clock.runFor(200);
   await p.keyboard.up("ArrowUp");
-  for (const k of ["w", "a", "s", "d", "v"]) await p.keyboard.press(k);
+  for (const k of ["w", "v"]) await p.keyboard.press(k);
   await p.clock.runFor(100);
   s = await snap(p);
   assert.equal(s.player.x, pos.x);

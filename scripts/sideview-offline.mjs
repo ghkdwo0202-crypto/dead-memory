@@ -44,8 +44,12 @@ try {
   const s = await p.evaluate(() => window.kageIn.snapshot());
   assert.ok(s.player.x > 380);
   assert.equal(s.player.stats.finishers, 1);
-  assert.equal(s.phase, "P3-A/B");
+  assert.equal(s.phase, "P3-A-C");
   assert.equal("airHeight" in s.player, false);
+  for (const key of ["a", "s", "d"]) await p.keyboard.press(key);
+  await p.clock.runFor(500);
+  const magic = await p.evaluate(() => window.kageIn.snapshot().magic);
+  assert.ok(magic.logs.some((l) => l.id === "NIN_017"));
   assert.deepEqual(errors, []);
   console.log(
     "PASS P3 offline single HTML: no external assets; server stopped/network offline; physical jump, horizontal movement and C finisher work",
