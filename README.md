@@ -1,3 +1,15 @@
+# KAGE//IN V5 — 다운로드해서 실행
+
+**[실행 ZIP 다운로드](https://github.com/ghkdwo0202-crypto/dead-memory/raw/refs/heads/downloads/kage-in-v5/downloads/v5/KAGE-IN-V5.zip)** → 압축 해제 → `KAGE-IN-V5.html`을 Chrome/Edge로 열기. Node.js나 localhost 접속은 필요하지 않습니다.
+
+[단독 HTML 파일](https://github.com/ghkdwo0202-crypto/dead-memory/blob/downloads/kage-in-v5/downloads/v5/KAGE-IN-V5.html)은 GitHub 페이지 오른쪽 위 **Download raw file**로 저장할 수도 있습니다.
+
+최신 기준은 [PR #9의 V5 통합 명세](docs/KAGE-IN-V5-PRODUCTION-SPEC-GALLERY.md)입니다. 이전 P3/P4와 MEAT MARKET은 별도 프로토타입입니다. V5 첫 웹 절편은 **[독립 실행 HTML](downloads/v5/KAGE-IN-V5.html)** 을 내려받아 열거나, `npm start` 후 `http://localhost:3000/kage-in-v5/index.html`에서 실행합니다.
+
+[실제 구현 범위·실행·검증·미구현](kage-in-v5/README.md) / [환경 감사와 대체 구현 결정](docs/KAGE-IN-V5-AUDIT.md). Unity가 없는 환경에서 만든 웹 대체 절편이며, 5막·60분 런이나 Q48 전체 구현을 완료한 버전은 아닙니다. 기존 게임과 다운로드는 아래에 그대로 보존합니다.
+
+---
+
 # MEAT MARKET
 
 괴물을 죽이고 신체 기관을 이식하는 **키보드 전용 2D 액션 서바이버 로그라이크** 프로토타입입니다. 기존 DEAD MEMORY의 JavaScript + Canvas 엔진과 배포 구조를 유지하고 초기 [개발 명세 v1.1](docs/MEAT-MARKET-SPECIFICATION.md)에 맞춰 전환했습니다. 이후 확장의 기준은 [Issue #2](https://github.com/ghkdwo0202-crypto/dead-memory/issues/2)와 [PR #1의 개발 명세 v1.3](docs/MEAT-MARKET-BUILD-SPEC-v1.3.md)입니다. 현재 구현과 v1.3의 차이 및 단계별 계획은 [Phase 0 보고](docs/PHASE0-REVIEW.md)에 정리했습니다.

@@ -1,0 +1,2654 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#101515" />
+    <title>KAGE//IN — V5 플레이 절편</title>
+    <style>:root {
+  color-scheme: dark;
+  --ink: #0e1516;
+  --paper: #e9e4d1;
+  --muted: #9ca7a1;
+  --red: #d65e50;
+  --gold: #d7b97b;
+  --line: #e9e4d12a;
+  font-family: Georgia, "Noto Serif KR", serif;
+  background: #080e0f;
+  color: var(--paper);
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+button,
+input,
+select {
+  font: inherit;
+}
+button {
+  cursor: pointer;
+  color: inherit;
+  border: 1px solid var(--line);
+  background: #162021;
+  padding: 13px 19px;
+  transition:
+    background 0.15s,
+    border 0.15s;
+}
+button:hover,
+button:focus-visible {
+  background: #263333;
+  border-color: var(--gold);
+  outline: 2px solid #d7b97b55;
+  outline-offset: 3px;
+}
+button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+button.primary {
+  background: var(--red);
+  color: #131819;
+  border-color: var(--red);
+  font-weight: bold;
+}
+#app {
+  position: absolute;
+  width: min(100vw, 177.7778vh);
+  height: min(100vh, 56.25vw);
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  overflow: hidden;
+  background: #121b1c;
+}
+#world {
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+}
+#overlay {
+  position: absolute;
+  inset: 0;
+  overflow: auto;
+  padding: 4% 5%;
+  background: #0b1115e8;
+  z-index: 5;
+}
+#overlay.title {
+  background: linear-gradient(
+    90deg,
+    #0b1115fc 0%,
+    #0b1115e8 34%,
+    #0b111500 73%
+  );
+  padding: 6% 7%;
+}
+.hidden {
+  display: none !important;
+}
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.24em;
+  color: var(--gold);
+  font:
+    11px ui-monospace,
+    monospace;
+  margin-bottom: 15px;
+}
+.logo {
+  font-size: clamp(35px, 5.5vw, 88px);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.08em;
+  margin: 0;
+}
+.logo em {
+  font-style: normal;
+  color: var(--red);
+}
+.subtitle {
+  font:
+    12px ui-monospace,
+    monospace;
+  letter-spacing: 0.3em;
+  margin: 17px 0 0;
+  color: var(--muted);
+}
+.title-nav {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  width: 28%;
+  min-width: 190px;
+  margin-top: 5%;
+}
+.title-nav button {
+  background: transparent;
+  text-align: left;
+  border: 0;
+  border-left: 2px solid transparent;
+  padding: 9px 16px;
+  font-size: clamp(12px, 1.4vw, 20px);
+}
+.title-nav button:hover,
+.title-nav button:focus-visible {
+  background: #e9e4d111;
+  border-left-color: var(--red);
+}
+.title-nav small {
+  font:
+    9px ui-monospace,
+    monospace;
+  float: right;
+  line-height: 24px;
+  color: var(--muted);
+}
+.title-note {
+  position: absolute;
+  bottom: 9%;
+  font: 11px/1.7 sans-serif;
+  color: var(--muted);
+  width: 32%;
+  max-width: 390px;
+}
+.page-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 3%;
+}
+.page-head h1 {
+  font-size: clamp(24px, 3vw, 42px);
+  margin: 0 0 8px;
+  font-weight: 500;
+}
+.page-head p,
+.muted {
+  color: var(--muted);
+  font: 13px/1.7 sans-serif;
+}
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 17px;
+}
+.hero-card {
+  text-align: left;
+  padding: 22px;
+  position: relative;
+  min-height: 240px;
+}
+.hero-card .glyph {
+  font-size: 65px;
+  line-height: 1.1;
+  display: block;
+  margin: 12px 0;
+  color: var(--hero);
+  text-shadow: 0 0 45px #fff1;
+}
+.hero-card h2 {
+  font-size: 27px;
+  margin: 16px 0 6px;
+}
+.hero-card p {
+  font: 13px/1.8 sans-serif;
+  color: var(--muted);
+  margin: 12px 0;
+}
+.hero-card small {
+  font: 11px monospace;
+  color: var(--gold);
+}
+.hero-card img {
+  height: 170px;
+  width: 100%;
+  object-fit: contain;
+}
+.bottom-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 24px;
+}
+.panel {
+  max-width: 900px;
+  margin: auto;
+  padding: 27px;
+  background: #152021;
+  border: 1px solid var(--line);
+}
+.support-choices {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin: 20px 0;
+}
+.support-choices button {
+  font-size: 14px;
+}
+.support-choices button.selected {
+  border-color: var(--gold);
+  background: #d7b97b17;
+}
+.brief {
+  font: 14px/1.8 sans-serif;
+  color: var(--muted);
+}
+.control-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 24px 0;
+}
+.control-grid span {
+  font: 12px sans-serif;
+  color: var(--muted);
+  padding: 14px;
+  border: 1px solid var(--line);
+}
+kbd {
+  color: var(--paper);
+  font: 13px monospace;
+  margin-right: 9px;
+}
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin: 10px 0 18px;
+}
+.tabs .selected {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 15px;
+}
+.art-card {
+  padding: 0;
+  overflow: hidden;
+  text-align: left;
+}
+.art-card .art-frame {
+  height: 165px;
+}
+.art-card strong,
+.art-card small {
+  display: block;
+  padding: 12px 14px 0;
+}
+.art-card small {
+  padding-bottom: 14px;
+  color: var(--muted);
+  font: 11px sans-serif;
+}
+.art-frame {
+  background: repeating-linear-gradient(
+    45deg,
+    #121b1c,
+    #121b1c 14px,
+    #152021 14px,
+    #152021 15px
+  );
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.art-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: auto;
+}
+.placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+  padding: 20px;
+  color: #889590;
+  font: 11px/1.5 sans-serif;
+}
+.placeholder b {
+  font-size: 40px;
+  color: #adb6a844;
+  font-family: Georgia, serif;
+}
+.detail-image {
+  height: 68%;
+  overflow: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #050808;
+}
+.detail-image img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  transform-origin: center;
+  transition: transform 0.1s;
+}
+.detail-info {
+  font: 12px/1.6 sans-serif;
+  color: var(--muted);
+  margin-top: 8px;
+}
+.settings-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 30px;
+  align-items: center;
+  padding: 17px 0;
+  border-bottom: 1px solid var(--line);
+  font: 14px sans-serif;
+}
+.settings-row input[type="range"] {
+  width: 160px;
+  accent-color: var(--red);
+}
+.settings-row input[type="checkbox"] {
+  accent-color: var(--red);
+  width: 20px;
+  height: 20px;
+}
+.mini {
+  font: 11px sans-serif;
+  color: var(--muted);
+}
+#hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  font: 12px sans-serif;
+}
+.hud-top {
+  position: absolute;
+  left: 3%;
+  top: 4%;
+  display: flex;
+  gap: 22px;
+  align-items: center;
+}
+.portrait-mark {
+  font-size: 36px;
+  color: var(--gold);
+  font-family: Georgia, serif;
+}
+.hp-wrap {
+  width: 200px;
+}
+.hp-line {
+  height: 7px;
+  background: #ffffff18;
+  margin: 9px 0;
+}
+.hp-fill {
+  height: 100%;
+  background: var(--red);
+}
+.room-label {
+  position: absolute;
+  top: 4%;
+  right: 3%;
+  text-align: right;
+  font: 12px/1.8 sans-serif;
+  color: #bdc7bd;
+}
+.skillbar {
+  position: absolute;
+  bottom: 4%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+}
+.skill {
+  padding: 12px 15px;
+  min-width: 120px;
+  background: #0a1213db;
+  border: 1px solid var(--line);
+  font: 12px/1.7 sans-serif;
+}
+.skill b {
+  color: var(--gold);
+  margin-right: 8px;
+}
+.skill small {
+  display: block;
+  color: var(--muted);
+  font-size: 10px;
+}
+.gauge {
+  height: 3px;
+  background: #d7b97b33;
+  margin-top: 7px;
+}
+.gauge span {
+  display: block;
+  height: 100%;
+  background: var(--gold);
+}
+.combat-hint {
+  position: absolute;
+  bottom: 15%;
+  left: 3%;
+  font: 10px/1.9 sans-serif;
+  color: #a4afa5;
+}
+.combat-msg {
+  position: absolute;
+  top: 16%;
+  width: 100%;
+  text-align: center;
+  color: var(--gold);
+  font-size: 15px;
+}
+.pause-button {
+  position: absolute;
+  right: 3%;
+  bottom: 4%;
+  pointer-events: auto;
+  padding: 10px;
+}
+#toast {
+  position: absolute;
+  z-index: 15;
+  bottom: 8%;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 75%;
+  padding: 10px 18px;
+  background: #080e0ff2;
+  border: 1px solid var(--gold);
+  font: 12px/1.7 sans-serif;
+  display: none;
+}
+#build-label {
+  position: absolute;
+  right: 12px;
+  bottom: 8px;
+  font: 8px monospace;
+  letter-spacing: 0.1em;
+  color: #80918b;
+  pointer-events: none;
+  z-index: 8;
+}
+.stats {
+  display: flex;
+  gap: 30px;
+  margin: 24px 0;
+}
+.stats b {
+  font-size: 32px;
+  display: block;
+  margin-bottom: 8px;
+}
+.stats span {
+  color: var(--muted);
+  font: 12px sans-serif;
+}
+.reward-card {
+  min-height: 180px;
+  text-align: left;
+  padding: 22px;
+}
+.reward-card h2 {
+  font-size: 23px;
+}
+.reward-card p {
+  font: 13px/1.8 sans-serif;
+  color: var(--muted);
+}
+.catalogue {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  max-height: 340px;
+  overflow: auto;
+}
+.catalogue div {
+  padding: 13px;
+  background: #152021;
+  font: 12px/1.7 sans-serif;
+  border: 1px solid var(--line);
+}
+.catalogue small {
+  display: block;
+  color: var(--muted);
+}
+@media (max-width: 900px) {
+  #overlay {
+    padding: 3%;
+  }
+  .hero-card {
+    padding: 12px;
+    min-height: 180px;
+  }
+  .hero-card .glyph {
+    font-size: 40px;
+    margin: 2px;
+  }
+  .hero-card h2 {
+    font-size: 20px;
+    margin: 7px 0;
+  }
+  .hero-card p,
+  .brief,
+  .page-head p {
+    font-size: 11px;
+  }
+  .hero-card img {
+    height: 80px;
+  }
+  .title-note {
+    font-size: 9px;
+    bottom: 7%;
+  }
+  .title-nav {
+    gap: 0;
+    margin-top: 3%;
+  }
+  .title-nav button {
+    padding: 5px 12px;
+  }
+  .gallery-grid {
+    gap: 8px;
+  }
+  .art-card .art-frame {
+    height: 90px;
+  }
+  .tabs button {
+    padding: 8px;
+    font-size: 11px;
+  }
+  .page-head {
+    margin-bottom: 10px;
+  }
+  .page-head button,
+  .bottom-actions button {
+    padding: 9px 13px;
+    font-size: 12px;
+  }
+  .skill {
+    min-width: 85px;
+    padding: 8px;
+    font-size: 10px;
+  }
+  .skillbar {
+    gap: 5px;
+  }
+  .panel {
+    padding: 17px;
+  }
+  .control-grid {
+    margin: 14px 0;
+    gap: 6px;
+  }
+  .control-grid span {
+    padding: 8px;
+    font-size: 10px;
+  }
+  .settings-row {
+    padding: 10px 0;
+    font-size: 12px;
+  }
+  .hp-wrap {
+    width: 140px;
+  }
+  .reward-card {
+    padding: 14px;
+    min-height: 130px;
+  }
+  .reward-card h2 {
+    font-size: 18px;
+  }
+  .placeholder {
+    font-size: 9px;
+    gap: 6px;
+  }
+  .placeholder b {
+    font-size: 24px;
+  }
+}
+</style>
+  </head>
+  <body>
+    <main id="app">
+      <canvas
+        id="world"
+        width="1440"
+        height="810"
+        aria-label="KAGE IN 탑다운 전투 화면"
+      ></canvas>
+      <div id="hud" class="hidden"></div>
+      <div id="overlay"></div>
+      <div id="toast" role="status"></div>
+      <div id="build-label">V5 / WEB PROTOTYPE · 원본 아트 미포함</div>
+    </main>
+    <script>"use strict";
+window.KAGE_GALLERY={"schemaVersion":1,"artStyle":"Kitsune-approved clean pixel/ink look; no heavy procedural noise","assetsStatus":"local-reference-only; binary images not yet committed to git","entries":[{"id":"hero_karasu","category":"hero","title":"카라스","sourceFilename":"19793.png","asset":"assets/kage-in/portraits/hero_karasu.png","unlock":"default","designStatus":"locked"},{"id":"hero_kitsune","category":"hero","title":"키츠네","sourceFilename":"19794.png","asset":"assets/kage-in/portraits/hero_kitsune.png","unlock":"default","designStatus":"locked-master-style"},{"id":"hero_goro","category":"hero","title":"고로","sourceFilename":"19805.png","asset":"assets/kage-in/portraits/hero_goro.png","unlock":"default","designStatus":"locked-remove-back-cannon"},{"id":"rival_shiroha","category":"rival","title":"시로하","sourceFilename":"오만한_깃털_검객의_초상.png","asset":"assets/kage-in/portraits/rival_shiroha.png","unlock":"encounter:rival_shiroha","designStatus":"first-face-locked-palette-pending"},{"id":"rival_nekomata","category":"rival","title":"네코마타","sourceFilename":"낡은_닌자_차림의_네코마타와_금화.png","asset":"assets/kage-in/portraits/rival_nekomata.png","unlock":"encounter:rival_nekomata","designStatus":"simplified-costume-palette-pending"},{"id":"rival_akado","category":"rival","title":"아카도","sourceFilename":"광기의_오니_아카도_달빛_아래의_도전.png","asset":"assets/kage-in/portraits/rival_akado.png","unlock":"encounter:rival_akado","designStatus":"aged-mad-oni-selected"},{"id":"title_screen","category":"title","title":"KAGE//IN 메인 타이틀","sourceFilename":"붉은_달_아래_카게인_타이틀_화면.png","asset":"assets/kage-in/title/title_screen_reference.png","unlock":"default","designStatus":"title-reference"}]};
+(() => { const modules = {};
+modules["data.js"] = (() => {
+const TUNING = Object.freeze({
+  step: 1 / 60,
+  width: 1440,
+  height: 810,
+  speed: 265,
+  maxEnemies: 20,
+  maxEffects: 120,
+  dashDuration: 0.18,
+  dashInvulnerability: 0.13,
+  dashRecharge: 1.8,
+  dashSpeed: 850,
+  gaugeMax: 100,
+  gaugePerHit: 9,
+  infusionDuration: 3,
+  attackSpeedCap: 1.6,
+});
+const HEROES = [
+  {
+    id: "HERO_KARASU",
+    name: "카라스",
+    species: "까마귀 텐구",
+    weapon: "닌자도",
+    offense: "O01",
+    hp: 120,
+    color: "#adc4d0",
+    symbol: "烏",
+    description: "정밀한 검격과 빠른 5연검. 전방을 정리하며 빈틈을 노립니다.",
+    line: "이번엔 흔적 없이. …가능하면.",
+  },
+  {
+    id: "HERO_KITSUNE",
+    name: "키츠네",
+    species: "여우 요괴",
+    weapon: "쌍단도",
+    offense: "O05",
+    hp: 100,
+    color: "#e7b88a",
+    symbol: "狐",
+    description: "짧은 간격의 쌍단도 난무. 가까이 붙어 여러 번 베어냅니다.",
+    line: "쇼군 금고? 구경만 한다니까.",
+  },
+  {
+    id: "HERO_GORO",
+    name: "고로",
+    species: "붉은 오니",
+    weapon: "카나보",
+    offense: "O09",
+    hp: 180,
+    color: "#d87965",
+    symbol: "鬼",
+    description:
+      "긴 준비 뒤 넓고 무거운 강타. 적의 전조를 읽고 한 방을 꽂습니다.",
+    line: "문이 잠겼다고? 문부터 싸우자!",
+  },
+];
+const offenseRows = [
+  ["연참술", "빠른 5연검", "질풍연참", "앞으로 전진하며 7연속 검격"],
+  ["발도술", "짧게 누름 / 홀드 충전 발도", "잔월일섬", "긴 직선 관통 참격"],
+  ["검기술", "기본 베기와 짧은 검기", "비검월아", "거대한 초승달 검기"],
+  ["선풍참", "넓은 부채꼴 / 회전 검격", "흑익선풍", "전진 회전 베기"],
+  ["난무술", "재빠른 다단 히트", "백화난무", "폭발적 연속 난무"],
+  ["환영습격", "공격 중 전진 스텝", "환영연살", "적을 돌며 찌르기"],
+  ["투척술", "근접과 비도 혼합", "천엽투척", "부채꼴 단도 투척"],
+  ["열상술", "상처 축적 / 마무리", "혈화개방", "출혈 상처 누적 폭파"],
+  ["분쇄술", "중량 타격", "귀왕격", "전방 강한 분쇄 일격"],
+  ["진동술", "지면 충격파", "대지붕괴", "거대 지진파"],
+  ["광란술", "지속 콤보 공격속도 증가", "귀신폭주", "고속 철퇴 난무"],
+  ["투귀술", "카나보 투척 / 회수", "철귀회전", "지정 위치 회전 투척"],
+];
+const OFFENSES = offenseRows.map((r, i) => ({
+  id: `O${String(i + 1).padStart(2, "0")}`,
+  hero: HEROES[Math.floor(i / 4)].id,
+  name: r[0],
+  primary: r[1],
+  active: r[2],
+  behavior: r[3],
+  implemented: [0, 4, 8].includes(i),
+}));
+const SUPPORTS = [
+  {
+    id: "S01",
+    name: "분신술",
+    active: "영분신",
+    description: "4초 동안 기본 공격을 45% 위력으로 따라 하는 분신 1기.",
+    cooldown: 10,
+    implemented: true,
+  },
+  {
+    id: "S02",
+    name: "속박술",
+    active: "주박사슬",
+    description: "조준 지점 주변 적을 모으고 잠시 감속. 보스 제어는 약화.",
+    cooldown: 7,
+    implemented: true,
+  },
+  {
+    id: "S03",
+    name: "치환술",
+    active: "허공바꾸기",
+    description: "조준 방향 유효 위치로 짧게 이동. 장애물 앞에서 멈춤.",
+    cooldown: 6,
+    implemented: true,
+  },
+  {
+    id: "S04",
+    name: "결계술",
+    active: "봉마진",
+    description: "4초 동안 적을 감속하는 결계. 방어 준비를 위한 공간.",
+    cooldown: 9,
+    implemented: true,
+  },
+];
+const fusionNames = [
+  ["백영연참", "쇄검연옥", "섬영오참", "천검진"],
+  ["천영발도", "일문참수", "무영일섬", "월하단죄"],
+  ["삼영검월", "쇄월검", "비영검로", "무한검옥"],
+  ["흑익천무", "흑익포박진", "풍영난섬", "풍마검진"],
+  ["백화환영", "혈무포박", "환영난무", "백화살진"],
+  ["삼영습격", "유령포획", "천변귀습", "환영사냥터"],
+  ["천엽환영", "주박비도", "비도순신", "비도천라"],
+  ["혈영살", "혈사박", "혈흔추적", "혈화진"],
+  ["삼귀분쇄", "귀왕처형", "귀신낙하", "철옥분쇄"],
+  ["삼중지진", "지맥포박", "진각순신", "지옥진"],
+  ["백귀광란", "수라분쇄", "귀영폭주", "수라투기장"],
+  ["귀철삼륜", "쇄철포획", "철귀비천", "철귀감옥"],
+];
+const fusionBehaviors = [
+  [
+    "분신 3기 순차 포위검 → 본체 5연",
+    "사슬로 모은 뒤 다단히트·광역 마무리",
+    "최대 5회 치환 연참",
+    "결계 내 기본타마다 추가 검격",
+  ],
+  [
+    "분신 교차참 → 본체 관통 발도",
+    "일렬로 모아 참수",
+    "경로에 지연 선형 참격",
+    "결계 중심 대형 일섬",
+  ],
+  [
+    "분신 검기 수렴 폭발",
+    "검기 명중 시 묶고 당김",
+    "검기를 따라 이동·재입력 회수",
+    "결계 둘레에서 검기 수렴",
+  ],
+  [
+    "분신 회오리 3개",
+    "흡인 회오리와 마무리",
+    "세 지점 치환 회전",
+    "체류형 회오리 장판",
+  ],
+  [
+    "본체와 분신 2명의 고속 난무",
+    "사슬 고정 후 부채꼴 난도질",
+    "최대 5표적 순간이동 난무",
+    "영역 내 기본타 잔향",
+  ],
+  [
+    "분신 2기 협공 찌르기",
+    "포획 후 추적 접근",
+    "세 번 위치 교환 찌르기",
+    "표시된 적 접근 추가타",
+  ],
+  [
+    "분신 투척 부채꼴 집중",
+    "단도 적중점 간 사슬",
+    "단도로 치환 후 베기",
+    "경계 단도가 진입 적 공격",
+  ],
+  [
+    "분신 상처 축적 후 본체 폭발",
+    "출혈 적 연결 동시 폭발",
+    "출혈 적 차례로 치환 파열",
+    "출혈 연장·폭발 추가 절단",
+  ],
+  [
+    "분신 2기 측면 강타 후 본체 중앙 강타",
+    "끌어모아 귀왕 강타",
+    "목표 위 낙하 충격파",
+    "작은 진 구속 후 강타",
+  ],
+  [
+    "세 지점 동시 지진",
+    "사슬 사이 진동 전파",
+    "출발·도착 지진",
+    "진동 장판 기본타로 펄스 가속",
+  ],
+  [
+    "콤보에 따라 분신 타격 가속",
+    "끌어당긴 뒤 후려치기",
+    "치환 중 콤보 유지",
+    "결계 내 공속 상승",
+  ],
+  [
+    "세 방향 카나보 투척",
+    "사슬 카나보 끌기",
+    "철퇴에 치환 후 회수 회전",
+    "결계 내 철퇴 순환·귀환",
+  ],
+];
+const FUSIONS = OFFENSES.flatMap((o, i) =>
+  SUPPORTS.map((s, j) => ({
+    id: `Q_${o.id}_${s.id}`,
+    offenseId: o.id,
+    supportId: s.id,
+    name: fusionNames[i][j],
+    behavior: fusionBehaviors[i][j],
+    implemented: false,
+    // Timing/geometry below remain explicitly proposed until each action is implemented.
+    tuningStatus: "proposed",
+    start: 0.12,
+    active: 1.5,
+    recovery: 0.25,
+    targetMethod: "aim",
+    collisionGeometry: "TODO: unique skill geometry",
+    maxHitsPerTarget: 8,
+    knockback: 25,
+    control: "boss-resistant",
+    iframePolicy: "none",
+    vfxHooks: ["cast", "hit", "end"],
+    cancelWindows: [],
+    gaugeCost: 100,
+    entityCap: 12,
+  })),
+);
+const fusionFor = (o, s) =>
+  FUSIONS.find((q) => q.offenseId === o && q.supportId === s);
+const ELEMENTS = [
+  { id: "fire", name: "화", symbol: "火", color: "#f69b68" },
+  { id: "water", name: "수", symbol: "水", color: "#75bfe4" },
+  { id: "lightning", name: "뇌", symbol: "雷", color: "#e8ce72" },
+  { id: "wind", name: "풍", symbol: "風", color: "#a8d8b3" },
+];
+const ROOMS = [
+  {
+    id: "gate",
+    name: "성 외곽 · 버려진 정문",
+    enemies: 5,
+    experience: "검병의 전조를 읽고 무기로 제압",
+    reward: "스탯 카드 1개",
+    risk: "보통",
+    boss: false,
+  },
+  {
+    id: "guard",
+    name: "외성 · 경비 마당",
+    enemies: 7,
+    experience: "검병 무리를 상대로 위치 선정",
+    reward: "스탯 카드 1개",
+    risk: "높음",
+    boss: false,
+  },
+  {
+    id: "rest",
+    name: "작은 온천",
+    enemies: 0,
+    experience: "전투 없이 잠시 휴식",
+    reward: "최대 체력의 35% 회복",
+    risk: "없음",
+    boss: false,
+  },
+  {
+    id: "boss",
+    name: "외성 · 문지기",
+    enemies: 1,
+    experience: "문지기의 넓은 강타와 틈 공략",
+    reward: "수직 절편 클리어",
+    risk: "매우 높음",
+    boss: true,
+  },
+];
+const OBSTACLES = [
+  { x: 370, y: 280, w: 115, h: 70 },
+  { x: 950, y: 480, w: 115, h: 70 },
+];
+const REWARDS = [
+  {
+    id: "power",
+    name: "날을 벼리다",
+    description: "무기 피해 +12%. 최대 +60%.",
+    cap: 5,
+  },
+  {
+    id: "health",
+    name: "요괴의 기백",
+    description: "최대 HP +15, HP 25 회복. 최대 5회.",
+    cap: 5,
+  },
+  {
+    id: "haste",
+    name: "가벼운 손목",
+    description: "기본 공격속도 +8%. 최대 +40%.",
+    cap: 5,
+  },
+];
+
+return {TUNING,HEROES,OFFENSES,SUPPORTS,FUSIONS,fusionFor,ELEMENTS,ROOMS,OBSTACLES,REWARDS};
+})();
+modules["model.js"] = (() => {
+const {
+  TUNING: T,
+  HEROES,
+  OFFENSES,
+  SUPPORTS,
+  ELEMENTS,
+  ROOMS,
+  OBSTACLES,
+  REWARDS,
+} = modules["data.js"];
+const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+class SafeStore {
+  constructor(storage) {
+    this.storage = storage;
+    this.memory = new Map();
+    this.persistent = true;
+  }
+  read(key, fallback) {
+    try {
+      const raw = this.memory.has(key)
+        ? this.memory.get(key)
+        : this.storage?.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch {
+      this.persistent = false;
+      return fallback;
+    }
+  }
+  write(key, value) {
+    const raw = JSON.stringify(value);
+    this.memory.set(key, raw);
+    try {
+      this.storage?.setItem(key, raw);
+      if (!this.storage) this.persistent = false;
+    } catch {
+      this.persistent = false;
+    }
+  }
+  remove(key) {
+    this.memory.set(key, null);
+    try {
+      this.storage?.removeItem(key);
+    } catch {
+      this.persistent = false;
+    }
+  }
+}
+class GalleryState {
+  constructor(manifest, store) {
+    this.entries = manifest.entries;
+    this.store = store;
+    const saved = store.read("kage-in.gallery.v1", {});
+    this.unlocked = new Set(
+      saved?.version === 1 && Array.isArray(saved.ids)
+        ? saved.ids.filter((id) => this.entries.some((e) => e.id === id))
+        : [],
+    );
+  }
+  available(e, reveal = false) {
+    return e.unlock === "default" || reveal || this.unlocked.has(e.id);
+  }
+  event(type, id) {
+    if (!["rival.encountered", "rival.defeated"].includes(type)) return false;
+    const entry = this.entries.find(
+      (e) => e.id === id && e.unlock === `encounter:${id}`,
+    );
+    if (!entry || this.unlocked.has(id)) return false;
+    this.unlocked.add(id);
+    this.save();
+    return true;
+  }
+  save() {
+    this.store.write("kage-in.gallery.v1", {
+      version: 1,
+      ids: [...this.unlocked],
+    });
+  }
+  reset() {
+    this.unlocked.clear();
+    this.save();
+  }
+}
+const RUN_KEY = "kage-in.v5.run.v1";
+class Run {
+  constructor(heroId = "HERO_KARASU", supportId = "S01", seed = 20261102) {
+    const hero = HEROES.find((h) => h.id === heroId);
+    if (!hero) throw Error("Unknown hero");
+    if (!SUPPORTS.some((s) => s.id === supportId))
+      throw Error("Unknown support");
+    this.version = 1;
+    this.heroId = heroId;
+    this.offenseId = hero.offense;
+    this.supportId = supportId;
+    this.seed = seed >>> 0;
+    this.serial = 0;
+    this.t = 0;
+    this.accumulator = 0;
+    this.mode = "hub";
+    this.roomIndex = 0;
+    this.roomId = "gate";
+    this.kills = 0;
+    this.player = {
+      x: 220,
+      y: 405,
+      hp: hero.hp,
+      maxHP: hero.hp,
+      face: 0,
+      dashAt: 0,
+      dashUntil: 0,
+      invulnerableUntil: 0,
+      hurtUntil: 0,
+      eAt: 0,
+      sAt: 0,
+      gauge: 0,
+      element: null,
+      attack: null,
+      nextAttack: 0,
+      combo: 0,
+      comboUntil: 0,
+      dashDirection: 0,
+    };
+    this.ranks = { power: 0, health: 0, haste: 0 };
+    this.enemies = [];
+    this.effects = [];
+    this.scheduled = [];
+    this.cloneUntil = 0;
+    this.zone = null;
+    this.message = "";
+    this.messageUntil = 0;
+    this.timePlayed = 0;
+    this.hits = 0;
+  }
+  random() {
+    this.seed = (Math.imul(this.seed, 1664525) + 1013904223) >>> 0;
+    return this.seed / 4294967296;
+  }
+  nextId() {
+    return ++this.serial;
+  }
+  notify(text) {
+    this.message = text;
+    this.messageUntil = this.t + 2.8;
+  }
+  get hero() {
+    return HEROES.find((h) => h.id === this.heroId);
+  }
+  get room() {
+    return ROOMS.find((r) => r.id === this.roomId);
+  }
+  enter(id = this.roomId) {
+    const room = ROOMS.find((r) => r.id === id);
+    if (!room) return false;
+    this.roomId = id;
+    this.roomIndex++;
+    this.mode = "combat";
+    this.player.x = 220;
+    this.player.y = 405;
+    this.player.attack = null;
+    this.player.hurtUntil = this.t + 0.6;
+    this.enemies = [];
+    this.effects = [];
+    this.scheduled = [];
+    this.cloneUntil = 0;
+    this.zone = null;
+    if (id === "rest") {
+      this.player.hp = Math.min(
+        this.player.maxHP,
+        this.player.hp + this.player.maxHP * 0.35,
+      );
+      this.mode = "doors";
+      this.notify("따뜻하다. 쇼군도 이 맛을 알까?");
+      return true;
+    }
+    for (let i = 0; i < room.enemies; i++) {
+      const boss = room.boss;
+      this.enemies.push({
+        id: this.nextId(),
+        x: boss ? 1050 : 720 + this.random() * 450,
+        y: boss ? 405 : 160 + this.random() * 470,
+        hp: boss ? 900 : 90,
+        maxHP: boss ? 900 : 90,
+        radius: boss ? 38 : 18,
+        boss,
+        dead: false,
+        attackAt: this.t + 1 + this.random(),
+        telegraph: null,
+        hurtUntil: 0,
+        slowUntil: 0,
+        stunUntil: 0,
+        burnUntil: 0,
+        burnAt: 0,
+        received: [],
+      });
+    }
+    this.notify(
+      room.boss
+        ? "문지기: 초대장은? …철퇴는 초대장이 아니지!"
+        : "검병의 붉은 전조가 끝나기 전에 피하세요.",
+    );
+    return true;
+  }
+  valid(x, y, r = 16) {
+    return (
+      x >= 80 + r &&
+      x <= 1360 - r &&
+      y >= 110 + r &&
+      y <= 720 - r &&
+      !OBSTACLES.some(
+        (o) =>
+          x + r > o.x && x - r < o.x + o.w && y + r > o.y && y - r < o.y + o.h,
+      )
+    );
+  }
+  move(body, dx, dy, r = 16) {
+    const steps = Math.max(1, Math.ceil(Math.hypot(dx, dy) / 8));
+    for (let i = 0; i < steps; i++) {
+      if (this.valid(body.x + dx / steps, body.y, r)) body.x += dx / steps;
+      if (this.valid(body.x, body.y + dy / steps, r)) body.y += dy / steps;
+    }
+  }
+  fx(type, x, y, extra = {}) {
+    if (this.effects.length < T.maxEffects)
+      this.effects.push({ type, x, y, born: this.t, life: 0.35, ...extra });
+  }
+  queueAttack(kind, face) {
+    const p = this.player;
+    if (p.attack || p.dashUntil > this.t) return false;
+    const g = this.heroId === "HERO_GORO",
+      k = this.heroId === "HERO_KITSUNE";
+    const primary = kind === "primary";
+    if (primary && p.nextAttack > this.t) return false;
+    if (kind === "active" && p.eAt > this.t) {
+      this.notify("E 재사용 대기 중");
+      return false;
+    }
+    const cadence =
+        (g ? 0.78 : k ? 0.27 : 0.33) / (1 + this.ranks.haste * 0.08),
+      windup = g ? 0.25 : k ? 0.045 : 0.075;
+    if (primary) {
+      p.combo = this.t < p.comboUntil ? (p.combo % (k ? 4 : g ? 3 : 5)) + 1 : 1;
+      p.comboUntil = this.t + 1.1;
+      p.nextAttack = this.t + cadence;
+    } else {
+      p.eAt = this.t + 6;
+    }
+    p.attack = {
+      id: this.nextId(),
+      kind,
+      face,
+      at: this.t + windup,
+      until: this.t + (primary ? cadence : g ? 0.8 : 0.65),
+      resolved: false,
+      combo: p.combo,
+    };
+    return true;
+  }
+  hit(enemy, damage, id, element = null, knock = 20, gauge = true) {
+    if (enemy.dead || enemy.received.includes(id)) return false;
+    enemy.received.push(id);
+    if (enemy.received.length > 80) enemy.received.shift();
+    enemy.hp -= damage * (1 + this.ranks.power * 0.12);
+    enemy.hurtUntil = this.t + 0.12;
+    this.hits++;
+    if (gauge)
+      this.player.gauge = Math.min(
+        T.gaugeMax,
+        this.player.gauge + T.gaugePerHit,
+      );
+    const angle = Math.atan2(enemy.y - this.player.y, enemy.x - this.player.x);
+    this.move(
+      enemy,
+      Math.cos(angle) * knock,
+      Math.sin(angle) * knock,
+      enemy.radius,
+    );
+    if (element === "fire") {
+      enemy.burnUntil = this.t + 3;
+      enemy.burnAt = this.t + 0.5;
+    }
+    if (element === "water") enemy.slowUntil = this.t + 3;
+    if (element === "lightning")
+      enemy.stunUntil = this.t + (enemy.boss ? 0.12 : 0.6);
+    if (element === "wind")
+      this.move(
+        enemy,
+        Math.cos(angle) * 45,
+        Math.sin(angle) * 45,
+        enemy.radius,
+      );
+    this.fx("hit", enemy.x, enemy.y, {
+      text: String(Math.round(damage * (1 + this.ranks.power * 0.12))),
+      color: element
+        ? ELEMENTS.find((e) => e.id === element)?.color
+        : this.hero.color,
+    });
+    if (enemy.hp <= 0) {
+      enemy.dead = true;
+      this.kills++;
+      this.fx("death", enemy.x, enemy.y, { life: 0.6 });
+    }
+    return true;
+  }
+  strike(attack, origin = this.player, scale = 1, secondary = false) {
+    const g = this.heroId === "HERO_GORO",
+      k = this.heroId === "HERO_KITSUNE",
+      active = attack.kind === "active";
+    const range = g ? (active ? 190 : 135) : k ? 105 : 130,
+      cone = g ? 1.3 : k ? 1 : 1.05;
+    this.fx("slash", origin.x, origin.y, {
+      face: attack.face,
+      range,
+      color: this.hero.color,
+      life: g ? 0.3 : 0.17,
+      heavy: g,
+      combo: attack.combo,
+    });
+    let consumed = false;
+    for (const e of this.enemies) {
+      const angle = Math.atan2(e.y - origin.y, e.x - origin.x);
+      const delta = Math.abs(
+        Math.atan2(
+          Math.sin(angle - attack.face),
+          Math.cos(angle - attack.face),
+        ),
+      );
+      if (
+        distance(origin, e) < range + e.radius &&
+        delta < cone &&
+        this.clearLine(origin, e)
+      ) {
+        const element = !secondary && !consumed ? this.player.element : null;
+        if (
+          this.hit(
+            e,
+            (g ? 46 : k ? 12 : 21) * (active ? (g ? 2 : 1) : 1) * scale,
+            attack.id,
+            element,
+            g ? 45 : 12,
+            !secondary,
+          )
+        ) {
+          if (element) {
+            consumed = true;
+            this.player.element = null;
+          }
+        }
+      }
+    }
+    if (!secondary && this.cloneUntil > this.t) {
+      const clone = {
+        x: origin.x - Math.sin(attack.face) * 36,
+        y: origin.y + Math.cos(attack.face) * 36,
+      };
+      this.strike({ ...attack, id: this.nextId() }, clone, 0.45, true);
+    }
+  }
+  clearLine(a, b) {
+    const n = Math.max(1, Math.ceil(distance(a, b) / 8));
+    for (let i = 1; i < n; i++) {
+      const x = a.x + ((b.x - a.x) * i) / n,
+        y = a.y + ((b.y - a.y) * i) / n;
+      if (
+        OBSTACLES.some(
+          (o) => x > o.x && x < o.x + o.w && y > o.y && y < o.y + o.h,
+        )
+      )
+        return false;
+    }
+    return true;
+  }
+  support(aim) {
+    const p = this.player,
+      s = SUPPORTS.find((s) => s.id === this.supportId);
+    if (p.sAt > this.t) {
+      this.notify("지원 인술 재사용 대기 중");
+      return false;
+    }
+    if (p.dashUntil > this.t) return false;
+    p.sAt = this.t + s.cooldown;
+    const a = Math.atan2(aim.y - p.y, aim.x - p.x),
+      dest = { x: p.x, y: p.y };
+    this.move(
+      dest,
+      Math.cos(a) * Math.min(220, distance(p, aim)),
+      Math.sin(a) * Math.min(220, distance(p, aim)),
+    );
+    if (s.id === "S01") {
+      this.cloneUntil = this.t + 4;
+      this.fx("clone", p.x, p.y, { life: 4 });
+    }
+    if (s.id === "S02") {
+      const id = this.nextId();
+      for (const e of this.enemies)
+        if (distance(e, dest) < 190) {
+          const d = distance(e, dest) || 1;
+          this.move(
+            e,
+            ((dest.x - e.x) / d) * 70,
+            ((dest.y - e.y) / d) * 70,
+            e.radius,
+          );
+          e.slowUntil = this.t + (e.boss ? 0.5 : 2);
+          this.hit(e, 8, id, null, 0);
+        }
+      this.fx("chains", dest.x, dest.y, { life: 0.7, range: 190 });
+    }
+    if (s.id === "S03") {
+      p.x = dest.x;
+      p.y = dest.y;
+      this.fx("teleport", p.x, p.y, { life: 0.6 });
+    }
+    if (s.id === "S04") {
+      this.zone = { x: dest.x, y: dest.y, until: this.t + 4, radius: 155 };
+      this.fx("zone", dest.x, dest.y, { range: 155, life: 4 });
+    }
+    this.notify(s.active);
+    return true;
+  }
+  dash(input) {
+    const p = this.player;
+    if (p.dashAt > this.t) return false;
+    p.attack = null;
+    this.scheduled = [];
+    p.dashDirection = Math.hypot(input.x, input.y)
+      ? Math.atan2(input.y, input.x)
+      : p.face;
+    p.dashUntil = this.t + T.dashDuration;
+    p.invulnerableUntil = this.t + T.dashInvulnerability;
+    p.dashAt = this.t + T.dashRecharge;
+    this.fx("dash", p.x, p.y, { life: 0.3 });
+    return true;
+  }
+  damagePlayer(amount, id) {
+    const p = this.player;
+    if (p.invulnerableUntil > this.t) {
+      this.notify("회피 성공");
+      this.fx("evade", p.x, p.y);
+      return false;
+    }
+    if (p.hurtUntil > this.t) return false;
+    p.hp = Math.max(0, p.hp - amount);
+    p.hurtUntil = this.t + 0.6;
+    this.fx("hurt", p.x, p.y, { life: 0.3 });
+    if (!p.hp) {
+      this.mode = "dead";
+      p.attack = null;
+      this.scheduled = [];
+    }
+    return true;
+  }
+  tick(dt, input = {}) {
+    if (this.mode !== "combat") return;
+    this.accumulator += clamp(dt, 0, 0.1);
+    let first = true;
+    while (this.accumulator >= T.step) {
+      this.step({
+        ...input,
+        dash: first && input.dash,
+        active: first && input.active,
+        support: first && input.support,
+        fusion: first && input.fusion,
+        element: first ? input.element : undefined,
+      });
+      this.accumulator -= T.step;
+      first = false;
+      if (this.mode !== "combat") break;
+    }
+  }
+  step(input) {
+    this.t += T.step;
+    this.timePlayed += T.step;
+    const p = this.player;
+    if (input.element !== undefined && ELEMENTS[input.element])
+      p.element = ELEMENTS[input.element].id;
+    const aim = input.aim || {
+      x: p.x + Math.cos(p.face) * 100,
+      y: p.y + Math.sin(p.face) * 100,
+    };
+    if (distance(p, aim) > 2 && !p.attack)
+      p.face = Math.atan2(aim.y - p.y, aim.x - p.x);
+    let x = input.x || 0,
+      y = input.y || 0;
+    const n = Math.hypot(x, y) || 1;
+    x /= n;
+    y /= n;
+    if (input.dash) this.dash({ x, y });
+    if (p.dashUntil > this.t)
+      this.move(
+        p,
+        Math.cos(p.dashDirection) * T.dashSpeed * T.step,
+        Math.sin(p.dashDirection) * T.dashSpeed * T.step,
+      );
+    else
+      this.move(
+        p,
+        x * T.speed * T.step * (p.attack?.kind === "active" ? 0.6 : 1),
+        y * T.speed * T.step * (p.attack?.kind === "active" ? 0.6 : 1),
+      );
+    if (input.support) this.support(aim);
+    if (input.fusion)
+      this.notify(
+        "Q 고유 합성은 다음 단계 구현 예정 · 게이지는 타격으로 충전됩니다.",
+      );
+    if (input.active) this.queueAttack("active", p.face);
+    else if (input.attack) this.queueAttack("primary", p.face);
+    if (p.attack && !p.attack.resolved && this.t >= p.attack.at) {
+      p.attack.resolved = true;
+      this.strike(p.attack);
+      if (p.attack.kind === "active" && this.heroId !== "HERO_GORO") {
+        const total = this.heroId === "HERO_KITSUNE" ? 9 : 7;
+        for (let i = 1; i < total; i++)
+          this.scheduled.push({
+            at: this.t + i * 0.065,
+            attack: { ...p.attack, id: this.nextId() },
+          });
+      }
+    }
+    if (p.attack && this.t >= p.attack.until) p.attack = null;
+    for (const q of this.scheduled.filter((q) => q.at <= this.t)) {
+      if (this.heroId === "HERO_KARASU")
+        this.move(p, Math.cos(q.attack.face) * 9, Math.sin(q.attack.face) * 9);
+      this.strike(q.attack);
+    }
+    this.scheduled = this.scheduled.filter((q) => q.at > this.t);
+    for (const e of this.enemies) {
+      if (e.dead) continue;
+      if (e.burnUntil > this.t && e.burnAt <= this.t) {
+        e.burnAt = this.t + 0.5;
+        this.hit(e, 3, this.nextId(), null, 0, false);
+      }
+      if (e.dead) continue;
+      if (e.telegraph) {
+        if (this.t >= e.telegraph.at) {
+          const hit = e.telegraph;
+          if (distance(p, hit) < hit.radius)
+            this.damagePlayer(e.boss ? 28 : 12, hit.id);
+          this.fx("enemySlash", hit.x, hit.y, {
+            range: hit.radius,
+            life: 0.25,
+          });
+          e.telegraph = null;
+          e.attackAt = this.t + (e.boss ? 1.5 : 1.1);
+        }
+        continue;
+      }
+      if (e.stunUntil > this.t) continue;
+      const d = distance(e, p),
+        range = e.boss ? 155 : 58;
+      if (d < range && this.t >= e.attackAt) {
+        e.telegraph = {
+          id: this.nextId(),
+          x: e.x,
+          y: e.y,
+          at: this.t + (e.boss ? 0.95 : 0.65),
+          radius: range + 15,
+        };
+        continue;
+      }
+      if (d > 40) {
+        const slow =
+          e.slowUntil > this.t ||
+          (this.zone?.until > this.t &&
+            distance(e, this.zone) < this.zone.radius);
+        const speed = (e.boss ? 95 : 105) * (slow ? 0.45 : 1);
+        this.move(
+          e,
+          ((p.x - e.x) / d) * speed * T.step,
+          ((p.y - e.y) / d) * speed * T.step,
+          e.radius,
+        );
+      }
+    }
+    this.effects = this.effects.filter((e) => e.born + e.life > this.t);
+    this.enemies = this.enemies.filter((e) => !e.dead);
+    if (this.mode === "combat" && !this.enemies.length) {
+      this.mode = this.room.boss ? "victory" : "reward";
+      this.player.attack = null;
+      this.scheduled = [];
+    }
+  }
+  reward(id) {
+    if (this.mode !== "reward") return false;
+    const r = REWARDS.find((r) => r.id === id);
+    if (!r || this.ranks[id] >= r.cap) return false;
+    this.ranks[id]++;
+    if (id === "health") {
+      this.player.maxHP += 15;
+      this.player.hp = Math.min(this.player.maxHP, this.player.hp + 25);
+    }
+    this.mode = "doors";
+    return true;
+  }
+  save(store) {
+    store.write(RUN_KEY, this.snapshot());
+  }
+  snapshot() {
+    return JSON.parse(
+      JSON.stringify({
+        version: this.version,
+        heroId: this.heroId,
+        offenseId: this.offenseId,
+        supportId: this.supportId,
+        seed: this.seed,
+        serial: this.serial,
+        t: this.t,
+        mode: this.mode,
+        roomIndex: this.roomIndex,
+        roomId: this.roomId,
+        kills: this.kills,
+        player: this.player,
+        ranks: this.ranks,
+        enemies: this.enemies,
+        scheduled: this.scheduled,
+        cloneUntil: this.cloneUntil,
+        zone: this.zone,
+        timePlayed: this.timePlayed,
+        hits: this.hits,
+      }),
+    );
+  }
+  static restore(raw) {
+    try {
+      if (
+        raw?.version !== 1 ||
+        !HEROES.some((h) => h.id === raw.heroId) ||
+        !SUPPORTS.some((s) => s.id === raw.supportId) ||
+        !ROOMS.some((r) => r.id === raw.roomId) ||
+        !["hub", "combat", "reward", "doors"].includes(raw.mode)
+      )
+        return null;
+      const p = raw.player;
+      const finite = (v) => typeof v === "number" && Number.isFinite(v);
+      if (
+        !p ||
+        ![
+          "x",
+          "y",
+          "hp",
+          "maxHP",
+          "face",
+          "dashAt",
+          "dashUntil",
+          "invulnerableUntil",
+          "hurtUntil",
+          "eAt",
+          "sAt",
+          "gauge",
+          "nextAttack",
+          "combo",
+          "comboUntil",
+          "dashDirection",
+        ].every((k) => finite(p[k])) ||
+        p.hp <= 0 ||
+        p.hp > p.maxHP ||
+        p.maxHP > 1000 ||
+        !Array.isArray(raw.enemies) ||
+        raw.enemies.length > T.maxEnemies
+      )
+        return null;
+      if (
+        ![
+          "t",
+          "seed",
+          "serial",
+          "roomIndex",
+          "kills",
+          "timePlayed",
+          "hits",
+          "cloneUntil",
+        ].every((k) => finite(raw[k]) && raw[k] >= 0) ||
+        !raw.ranks ||
+        !REWARDS.every(
+          (r) =>
+            Number.isInteger(raw.ranks[r.id]) &&
+            raw.ranks[r.id] >= 0 &&
+            raw.ranks[r.id] <= r.cap,
+        )
+      )
+        return null;
+      if (
+        raw.enemies.some(
+          (e) =>
+            !e ||
+            ![
+              "id",
+              "x",
+              "y",
+              "hp",
+              "maxHP",
+              "radius",
+              "attackAt",
+              "hurtUntil",
+              "slowUntil",
+              "stunUntil",
+              "burnUntil",
+              "burnAt",
+            ].every((k) => finite(e[k])) ||
+            !Array.isArray(e.received) ||
+            e.received.length > 80 ||
+            e.hp <= 0 ||
+            e.maxHP <= 0 ||
+            e.hp > e.maxHP ||
+            e.maxHP > 10000 ||
+            e.radius < 1 ||
+            e.radius > 100 ||
+            (e.telegraph &&
+              !["id", "x", "y", "at", "radius"].every((k) =>
+                finite(e.telegraph[k]),
+              )),
+        )
+      )
+        return null;
+      if (
+        raw.zone &&
+        (!["x", "y", "until", "radius"].every((k) => finite(raw.zone[k])) ||
+          raw.zone.radius < 1 ||
+          raw.zone.radius > 300)
+      )
+        return null;
+      const run = new Run(raw.heroId, raw.supportId, raw.seed);
+      if (!run.valid(p.x, p.y)) return null;
+      // Only known state fields are copied. In-flight attacks are cancelled on resume.
+      for (const k of [
+        "serial",
+        "t",
+        "mode",
+        "roomIndex",
+        "roomId",
+        "kills",
+        "ranks",
+        "enemies",
+        "timePlayed",
+        "hits",
+        "cloneUntil",
+      ])
+        run[k] = structuredClone(raw[k]);
+      run.player = { ...run.player, ...structuredClone(p), attack: null };
+      run.player.element = ELEMENTS.some((e) => e.id === p.element)
+        ? p.element
+        : null;
+      run.player.hurtUntil = run.t + 0.5;
+      run.scheduled = [];
+      run.zone = raw.zone ? structuredClone(raw.zone) : null;
+      return run;
+    } catch {
+      return null;
+    }
+  }
+}
+
+return {clamp,distance,SafeStore,GalleryState,RUN_KEY,Run};
+})();
+modules["render.js"] = (() => {
+const { TUNING: T, OBSTACLES } = modules["data.js"];
+function draw(ctx, run, clock, options = {}) {
+  ctx.clearRect(0, 0, T.width, T.height);
+  ctx.fillStyle = "#152023";
+  ctx.fillRect(0, 0, T.width, T.height);
+  if (!run) {
+    title(ctx, clock);
+    return;
+  }
+  // World remains top-down; diamond paving provides a quiet quarter-view visual cue.
+  ctx.strokeStyle = "#bacbb308";
+  ctx.lineWidth = 1;
+  for (let x = -900; x < 2000; x += 80) {
+    ctx.beginPath();
+    ctx.moveTo(x, 110);
+    ctx.lineTo(x + 1100, 720);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x, 110);
+    ctx.lineTo(x - 1100, 720);
+    ctx.stroke();
+  }
+  ctx.fillStyle = "#0d1517";
+  ctx.fillRect(0, 0, 1440, 110);
+  ctx.fillRect(0, 720, 1440, 90);
+  ctx.fillRect(0, 0, 80, 810);
+  ctx.fillRect(1360, 0, 80, 810);
+  ctx.strokeStyle = "#d6b67a35";
+  ctx.strokeRect(80, 110, 1280, 610);
+  for (const o of OBSTACLES) {
+    ctx.fillStyle = "#070f1266";
+    ctx.fillRect(o.x + 12, o.y + 12, o.w, o.h);
+    ctx.fillStyle = "#283435";
+    ctx.fillRect(o.x, o.y, o.w, o.h);
+    ctx.fillStyle = "#53605b";
+    ctx.fillRect(o.x, o.y, o.w, 7);
+    ctx.strokeStyle = "#9fa89233";
+    ctx.strokeRect(o.x, o.y, o.w, o.h);
+  }
+  for (const fx of run.effects) {
+    if (fx.type === "zone") {
+      ctx.strokeStyle = "#8ed1c0";
+      ctx.fillStyle = "#8ed1c010";
+      circle(ctx, fx.x, fx.y, fx.range, true, true);
+    }
+  }
+  if (run.cloneUntil > run.t) {
+    ctx.globalAlpha = 0.35;
+    actor(
+      ctx,
+      { ...run.player, x: run.player.x - 42, y: run.player.y + 20 },
+      run.hero.color,
+      run.heroId,
+    );
+    ctx.globalAlpha = 1;
+  }
+  const entities = [
+    ...run.enemies.map((e) => ({ ...e, enemy: true })),
+    { ...run.player, player: true },
+  ].sort((a, b) => a.y - b.y);
+  for (const e of entities) {
+    if (e.enemy) {
+      actor(
+        ctx,
+        e,
+        e.hurtUntil > run.t && options.flash !== false
+          ? "#f1dfb1"
+          : e.boss
+            ? "#97798e"
+            : "#687e79",
+        e.boss ? "boss" : "enemy",
+      );
+      const width = e.boss ? 90 : 35;
+      ctx.fillStyle = "#080e10";
+      ctx.fillRect(e.x - width / 2, e.y - e.radius - 21, width, 4);
+      ctx.fillStyle = "#d87965";
+      ctx.fillRect(
+        e.x - width / 2,
+        e.y - e.radius - 21,
+        (width * e.hp) / e.maxHP,
+        4,
+      );
+    } else {
+      actor(
+        ctx,
+        e,
+        e.hurtUntil > run.t && options.flash !== false
+          ? "#f1dfb1"
+          : run.hero.color,
+        run.heroId,
+      );
+      if (e.invulnerableUntil > run.t) {
+        ctx.strokeStyle = "#d7b97b";
+        circle(ctx, e.x, e.y, 26, false, true);
+      }
+    }
+  }
+  for (const fx of run.effects) {
+    const age = (run.t - fx.born) / fx.life;
+    ctx.globalAlpha = Math.max(0, 1 - age);
+    ctx.strokeStyle = fx.color || "#d8c9a5";
+    ctx.fillStyle = fx.color || "#d8c9a5";
+    ctx.lineWidth = fx.heavy ? 14 : 5;
+    if (fx.type === "slash") {
+      ctx.beginPath();
+      ctx.ellipse(
+        fx.x,
+        fx.y,
+        fx.range,
+        fx.range * 0.7,
+        0,
+        fx.face - 1.1,
+        fx.face + 1.1,
+      );
+      ctx.stroke();
+    } else if (fx.type === "hit") {
+      ctx.font = "bold 19px monospace";
+      ctx.textAlign = "center";
+      ctx.fillText(fx.text, fx.x, fx.y - 32 - age * 30);
+    } else if (fx.type === "chains") {
+      for (let a = 0; a < 6; a++) {
+        ctx.beginPath();
+        ctx.moveTo(fx.x, fx.y);
+        ctx.lineTo(
+          fx.x + Math.cos((a * Math.PI) / 3) * fx.range,
+          fx.y + Math.sin((a * Math.PI) / 3) * fx.range * 0.6,
+        );
+        ctx.stroke();
+      }
+    } else if (!["zone", "clone"].includes(fx.type)) {
+      circle(ctx, fx.x, fx.y, (fx.range || 40) * (age + 0.3), false, true);
+    }
+    ctx.globalAlpha = 1;
+  }
+  // Hostile telegraphs are drawn last so player effects cannot hide timing.
+  for (const e of run.enemies)
+    if (e.telegraph) {
+      const h = e.telegraph,
+        progress = 1 - Math.max(0, h.at - run.t) / (e.boss ? 0.95 : 0.65);
+      ctx.fillStyle = "#dd5d4d18";
+      ctx.strokeStyle = "#f47761";
+      ctx.lineWidth = 2;
+      circle(ctx, h.x, h.y, h.radius, true, true);
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.arc(
+        h.x,
+        h.y,
+        h.radius,
+        -Math.PI / 2,
+        -Math.PI / 2 + Math.PI * 2 * progress,
+      );
+      ctx.stroke();
+      ctx.fillStyle = "#ffc99b";
+      ctx.font = "bold 22px monospace";
+      ctx.textAlign = "center";
+      ctx.fillText("!", h.x, h.y - 25);
+    }
+}
+function circle(c, x, y, r, fill, stroke) {
+  c.beginPath();
+  c.ellipse(x, y, r, r * 0.72, 0, 0, Math.PI * 2);
+  if (fill) c.fill();
+  if (stroke) c.stroke();
+}
+function actor(c, e, color, id) {
+  const g = id === "HERO_GORO",
+    k = id === "HERO_KITSUNE",
+    b = id === "boss";
+  c.fillStyle = "#0005";
+  circle(c, e.x, e.y + 13, b ? 44 : g ? 28 : 20, true, false);
+  c.fillStyle = color;
+  c.beginPath();
+  c.ellipse(
+    e.x,
+    e.y,
+    g ? 22 : b ? 34 : 15,
+    g ? 23 : b ? 34 : 20,
+    0,
+    0,
+    Math.PI * 2,
+  );
+  c.fill();
+  c.fillStyle = "#172127";
+  c.beginPath();
+  c.arc(e.x, e.y - 18, g ? 15 : b ? 22 : 12, 0, Math.PI * 2);
+  c.fill();
+  c.strokeStyle = "#d45f50";
+  c.lineWidth = 6;
+  c.beginPath();
+  c.moveTo(e.x - 7, e.y - 7);
+  c.lineTo(e.x + 12, e.y - 6);
+  c.lineTo(e.x + 27, e.y + 9);
+  c.stroke();
+  const a = e.face || 0;
+  c.save();
+  c.translate(e.x, e.y);
+  c.rotate(a);
+  c.strokeStyle = "#d9d7bc";
+  c.lineWidth = g ? 11 : 3;
+  c.beginPath();
+  c.moveTo(12, 0);
+  c.lineTo(g ? 65 : 47, 0);
+  c.stroke();
+  if (g) {
+    c.fillStyle = "#647370";
+    c.beginPath();
+    c.ellipse(53, 0, 22, 12, 0, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = "#c1c5ab";
+    for (const x of [39, 51, 63]) {
+      for (const y of [-11, 11]) {
+        c.beginPath();
+        c.arc(x, y, 3, 0, Math.PI * 2);
+        c.fill();
+      }
+    }
+  }
+  if (k) {
+    c.beginPath();
+    c.moveTo(10, 14);
+    c.lineTo(37, 14);
+    c.stroke();
+  }
+  c.restore();
+  if (g) {
+    c.fillStyle = color;
+    for (const sign of [-1, 1]) {
+      c.beginPath();
+      c.moveTo(e.x + sign * 7, e.y - 29);
+      c.lineTo(e.x + sign * 13, e.y - 43);
+      c.lineTo(e.x + sign * 16, e.y - 23);
+      c.fill();
+    }
+  }
+}
+function title(c, time) {
+  const gradient = c.createLinearGradient(0, 0, 1440, 810);
+  gradient.addColorStop(0, "#111c20");
+  gradient.addColorStop(1, "#293434");
+  c.fillStyle = gradient;
+  c.fillRect(0, 0, 1440, 810);
+  c.fillStyle = "#a84e42";
+  c.beginPath();
+  c.arc(1020, 295, 218, 0, Math.PI * 2);
+  c.fill();
+  c.strokeStyle = "#d4a07730";
+  c.lineWidth = 1;
+  for (let r = 240; r < 330; r += 30) {
+    c.beginPath();
+    c.arc(1020, 295, r, 0, Math.PI * 2);
+    c.stroke();
+  }
+  c.fillStyle = "#101b20";
+  for (let i = 0; i < 5; i++) {
+    const y = 260 + i * 43,
+      w = 115 + i * 23;
+    c.beginPath();
+    c.moveTo(1010 - w, y);
+    c.lineTo(1010 + w, y);
+    c.lineTo(1010 + w - 40, y - 27);
+    c.lineTo(1010 - w + 40, y - 27);
+    c.fill();
+    c.fillRect(1010 - w + 25, y, w * 2 - 50, 30);
+  }
+  c.fillStyle = "#0e171b";
+  c.beginPath();
+  c.moveTo(550, 810);
+  c.lineTo(760, 580);
+  c.lineTo(1020, 660);
+  c.lineTo(1440, 510);
+  c.lineTo(1440, 810);
+  c.fill();
+  for (const [i, mark] of ["烏", "狐", "鬼"].entries()) {
+    const x = 780 + i * 205,
+      y = 520 + (i === 1 ? -35 : 20);
+    c.fillStyle = "#121c20";
+    c.beginPath();
+    c.ellipse(x, y + 150, i === 2 ? 88 : 62, 160, 0, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = "#1b2528";
+    c.beginPath();
+    c.arc(x, y - 10, i === 2 ? 55 : 39, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = "#bb6b57";
+    c.font = "42px Georgia";
+    c.textAlign = "center";
+    c.fillText(mark, x, y + 12);
+    c.strokeStyle = "#934e40";
+    c.lineWidth = 12;
+    c.beginPath();
+    c.moveTo(x - 35, y + 55);
+    c.lineTo(x + 50, y + 62);
+    c.lineTo(x + 110, y + 105);
+    c.stroke();
+  }
+  c.fillStyle = "#b2714c";
+  for (let i = 0; i < 24; i++) {
+    const x = 650 + ((i * 127 + time * 14) % 800),
+      y = (i * 83 + time * 23) % 810;
+    c.save();
+    c.translate(x, y);
+    c.rotate(i + time * 0.1);
+    c.fillRect(-3, -1, 10, 3);
+    c.restore();
+  }
+  c.font = "11px monospace";
+  c.fillStyle = "#9fa89b";
+  c.textAlign = "right";
+  c.fillText("ART PLACEHOLDER / ORIGINAL REFERENCES PENDING", 1390, 765);
+}
+
+return {draw};
+})();
+modules["game.js"] = (() => {
+const {
+  HEROES,
+  OFFENSES,
+  SUPPORTS,
+  FUSIONS,
+  ELEMENTS,
+  ROOMS,
+  REWARDS,
+  fusionFor,
+} = modules["data.js"];
+const { Run, GalleryState, SafeStore, RUN_KEY, clamp } = modules["model.js"];
+const { draw } = modules["render.js"];
+const $ = (id) => document.getElementById(id),
+  canvas = $("world"),
+  ctx = canvas.getContext("2d"),
+  overlay = $("overlay"),
+  hud = $("hud");
+const escape = (s) =>
+  String(s).replace(
+    /[&<>"']/g,
+    (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
+        c
+      ],
+  );
+let storage;
+try {
+  storage = window.localStorage;
+} catch {}
+const store = new SafeStore(storage);
+const defaultOptions = { reveal: false, flash: true, volume: 0.3 };
+const savedOptions = store.read("kage-in.v5.options.v1", {});
+const options = { ...defaultOptions };
+if (savedOptions?.version === 1) {
+  for (const k of ["reveal", "flash"])
+    if (typeof savedOptions[k] === "boolean") options[k] = savedOptions[k];
+  if (Number.isFinite(savedOptions.volume))
+    options.volume = clamp(savedOptions.volume, 0, 1);
+}
+let run = null,
+  screen = "loading",
+  returnTo = () => title(),
+  galleryTab = "hero",
+  detailIndex = 0,
+  zoom = 1,
+  info = true,
+  selection = 0,
+  heroIndex = 0,
+  supportId = "S01",
+  last = 0,
+  lastMode = "",
+  gallery,
+  manifest,
+  detailEntries = [],
+  audio;
+const keys = new Set(),
+  edge = {};
+let attack = false,
+  aim = { x: 1000, y: 405 };
+function clearInput() {
+  keys.clear();
+  attack = false;
+  for (const k of Object.keys(edge)) delete edge[k];
+}
+function toast(text) {
+  $("toast").textContent = text;
+  $("toast").style.display = "block";
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => ($("toast").style.display = "none"), 3500);
+}
+function beep(freq = 330) {
+  if (!options.volume) return;
+  try {
+    audio ??= new (window.AudioContext || window.webkitAudioContext)();
+    const o = audio.createOscillator(),
+      g = audio.createGain();
+    o.frequency.value = freq;
+    o.type = "triangle";
+    g.gain.setValueAtTime(options.volume * 0.08, audio.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.08);
+    o.connect(g).connect(audio.destination);
+    o.start();
+    o.stop(audio.currentTime + 0.08);
+  } catch {}
+}
+function view(name, html, bindings = {}) {
+  clearInput();
+  screen = name;
+  overlay.className = name === "title" ? "title" : "";
+  overlay.innerHTML = html;
+  hud.classList.add("hidden");
+  selection = 0;
+  for (const [id, fn] of Object.entries(bindings)) {
+    const e = $(id);
+    if (e) e.onclick = fn;
+  }
+  overlay
+    .querySelectorAll("button")
+    .forEach((b) => b.addEventListener("click", () => beep(440)));
+  const first = overlay.querySelector("button:not(:disabled)");
+  first?.focus({ preventScroll: true });
+}
+const head = (eyebrow, title, text = "") =>
+  `<header class="page-head"><div><div class="eyebrow">${eyebrow}</div><h1>${title}</h1>${text ? `<p>${text}</p>` : ""}</div><button id="back">← 뒤로 <small>ESC</small></button></header>`;
+function title() {
+  run = null;
+  lastMode = "";
+  const saved = Run.restore(store.read(RUN_KEY, null));
+  view(
+    "title",
+    `<div class="eyebrow">요괴 셋. 성 하나. 계획은 나중에.</div><h1 class="logo">KAGE<em>//</em>IN</h1><p class="subtitle">SHADOWS WITH AN ATTITUDE</p><nav class="title-nav" aria-label="타이틀 메뉴"><button id="new">새 게임 <small>START</small></button><button id="continue" ${saved ? "" : "disabled"}>이어하기 <small>CONTINUE</small></button><button id="gallery">갤러리 <small>GALLERY</small></button><button id="settings">설정 <small>SETTINGS</small></button><button id="codex">개발 현황 / 도움말</button><button id="exit">종료 <small>EXIT</small></button></nav><p class="title-note">V5 첫 플레이 절편 · WASD + 마우스<br>3명의 기본 전투 / 지원 4종 / 짧은 방 진행<br>5막·60분 런과 Q48 실전은 다음 단계입니다.</p>`,
+    {
+      new: () => {
+        if (saved)
+          confirmView("저장된 런을 새 런으로 바꿀까요?", () => heroes(), title);
+        else heroes();
+      },
+      continue: () => {
+        run = saved;
+        resumeMode();
+      },
+      gallery: () => openGallery(title),
+      settings: () => settings(title),
+      codex: () => codex(title),
+      exit: () =>
+        view(
+          "exit",
+          head(
+            "THANK YOU",
+            "잠시 그림자 밖으로.",
+            "게임을 종료했습니다. 브라우저 탭을 닫아도 됩니다.",
+          ) + '<button id="return">타이틀로 돌아가기</button>',
+          { back: title, return: title },
+        ),
+    },
+  );
+}
+function heroes() {
+  view(
+    "heroes",
+    head(
+      "CHOOSE YOUR TROUBLE",
+      "누가 먼저 담을 넘을까?",
+      "한 번에 1명만 플레이합니다. 각 영웅의 첫 공격 계열을 체험합니다.",
+    ) +
+      `<section class="cards">${HEROES.map((h, i) => `<button class="hero-card" id="hero-${i}" style="--hero:${h.color}"><small>${h.species} / ${h.weapon}</small><span class="glyph">${h.symbol}</span><h2>${h.name}</h2><p>${h.description}</p><small>HP ${h.hp} · ${OFFENSES.find((o) => o.id === h.offense).name} →</small></button>`).join("")}</section><p class="mini">초상 원본 PNG 미포함 · 기호/도형은 임시 표현입니다.</p>`,
+    {
+      back: title,
+      ...Object.fromEntries(
+        HEROES.map((h, i) => [
+          `hero-${i}`,
+          () => {
+            heroIndex = i;
+            hub(true);
+          },
+        ]),
+      ),
+    },
+  );
+}
+function hub(fresh = false) {
+  if (fresh) {
+    run = new Run(HEROES[heroIndex].id, supportId);
+    run.save(store);
+  }
+  view(
+    "hub",
+    head(
+      "SAFE HOUSE / V5 SLICE",
+      `${run.hero.name} · 작은 은신처`,
+      run.hero.line,
+    ) +
+      `<section class="panel"><div class="eyebrow">우클릭에 장착할 지원 인술</div><div class="support-choices">${SUPPORTS.map((s) => `<button id="support-${s.id}" class="${run.supportId === s.id ? "selected" : ""}">${s.name}</button>`).join("")}</div><p class="brief" id="support-desc">${SUPPORTS.find((s) => s.id === run.supportId).description}</p><div class="control-grid"><span><kbd>WASD</kbd>이동</span><span><kbd>마우스 / 좌클릭</kbd>조준 / 기본타</span><span><kbd>Space</kbd>회피 · 벽 통과 불가</span><span><kbd>E / 우클릭</kbd>공격 인술 / 지원</span><span><kbd>1 2 3 4</kbd>다음 타격 속성 예약</span><span><kbd>Q</kbd>고유 합성 · 미구현 안내</span></div><div class="bottom-actions"><button id="hub-gallery">갤러리</button><button class="primary" id="enter">성 외곽으로 →</button></div></section>`,
+    {
+      back: () =>
+        confirmView(
+          "타이틀로 돌아갈까요? 현재 런은 저장됩니다.",
+          () => {
+            run.save(store);
+            title();
+          },
+          () => hub(),
+        ),
+      "hub-gallery": () => openGallery(() => hub()),
+      enter: () => {
+        run.enter("gate");
+        run.save(store);
+        play();
+      },
+      ...Object.fromEntries(
+        SUPPORTS.map((s) => [
+          `support-${s.id}`,
+          () => {
+            run.supportId = s.id;
+            supportId = s.id;
+            run.save(store);
+            hub();
+          },
+        ]),
+      ),
+    },
+  );
+}
+function play() {
+  clearInput();
+  screen = "combat";
+  overlay.className = "hidden";
+  hud.classList.remove("hidden");
+  lastMode = run.mode;
+  canvas.focus();
+  updateHUD();
+}
+function resumeMode() {
+  if (run.mode === "hub") hub();
+  else if (run.mode === "combat") play();
+  else if (run.mode === "reward") rewards();
+  else doors();
+}
+function updateHUD() {
+  if (!run) return;
+  const p = run.player,
+    o = OFFENSES.find((o) => o.id === run.offenseId),
+    s = SUPPORTS.find((s) => s.id === run.supportId),
+    q = fusionFor(o.id, s.id),
+    cd = (v) => (v > run.t ? `${(v - run.t).toFixed(1)}s` : "준비");
+  hud.innerHTML = `<div class="hud-top"><div class="portrait-mark">${run.hero.symbol}</div><div class="hp-wrap"><strong>${run.hero.name} · ${Math.ceil(p.hp)} / ${p.maxHP}</strong><div class="hp-line"><div class="hp-fill" style="width:${(100 * p.hp) / p.maxHP}%"></div></div><span>${o.name} / ${s.name}</span></div></div><div class="room-label">${run.room.name}<br>남은 적 ${run.enemies.length} · ${Math.floor(run.timePlayed / 60)}:${String(Math.floor(run.timePlayed % 60)).padStart(2, "0")}</div><div class="combat-hint">WASD 이동 · 좌클릭 홀드 공격<br>Space 회피 ${cd(p.dashAt)} · Esc 일시정지<br>예약 속성: ${ELEMENTS.find((e) => e.id === p.element)?.name || "없음"}</div><div class="skillbar"><div class="skill"><b>E</b>${o.active}<small>${cd(p.eAt)}</small></div><div class="skill"><b>RMB</b>${s.active}<small>${cd(p.sAt)}</small></div><div class="skill"><b>Q</b>${q.name}<small>고유 동작 미구현 · ${Math.round(p.gauge)} / 100</small><div class="gauge"><span style="width:${p.gauge}%"></span></div></div><div class="skill"><b>1—4</b>인퓨전<small>${ELEMENTS.map((e) => e.symbol).join(" / ")}</small></div></div><div class="combat-msg">${run.messageUntil > run.t ? escape(run.message) : ""}</div><button class="pause-button" id="pause-button">Ⅱ 일시정지</button>`;
+  $("pause-button").onclick = pause;
+}
+function pause() {
+  if (!run) return;
+  run.save(store);
+  view(
+    "pause",
+    head("TAKE A BREATH", "그림자 속에서 잠깐.") +
+      `<section class="panel"><p class="brief">${run.hero.name} · ${run.room.name}<br>피해 강화 ${run.ranks.power}/5 · 체력 강화 ${run.ranks.health}/5 · 공속 강화 ${run.ranks.haste}/5<br>${store.persistent ? "현재 런을 저장했습니다." : "저장이 차단되어 현재 탭에서만 유지됩니다."}</p><div class="bottom-actions"><button class="primary" id="resume">계속하기</button><button id="pause-settings">설정</button><button id="pause-gallery">갤러리</button><button id="quit">런 나가기</button></div></section>`,
+    {
+      back: resumeMode,
+      resume: resumeMode,
+      "pause-settings": () => settings(pause),
+      "pause-gallery": () => openGallery(pause),
+      quit: () =>
+        confirmView(
+          "런을 저장하고 타이틀로 돌아갈까요?",
+          () => {
+            run.save(store);
+            title();
+          },
+          pause,
+        ),
+    },
+  );
+}
+function rewards() {
+  run.save(store);
+  const valid = REWARDS.filter((r) => run.ranks[r.id] < r.cap);
+  if (!valid.length) {
+    run.mode = "doors";
+    doors();
+    return;
+  }
+  view(
+    "reward",
+    head(
+      "ROOM CLEARED",
+      "그만큼 강해졌다.",
+      "방 보상 하나를 선택하세요. 기술 분기는 다음 단계이며 아래는 공통 스탯 강화입니다.",
+    ) +
+      `<section class="cards">${valid.map((r) => `<button id="reward-${r.id}" class="reward-card"><div class="eyebrow">${run.ranks[r.id]} / ${r.cap}</div><h2>${r.name}</h2><p>${r.description}</p></button>`).join("")}</section>`,
+    Object.fromEntries(
+      valid.map((r) => [
+        `reward-${r.id}`,
+        () => {
+          run.reward(r.id);
+          doors();
+        },
+      ]),
+    ),
+  );
+  $("back").disabled = true;
+}
+function doors() {
+  run.save(store);
+  const choices = run.roomId === "gate" ? ["guard", "rest"] : ["boss"];
+  view(
+    "doors",
+    head(
+      "CHOOSE THE NEXT ROOM",
+      "어느 문으로 갈까?",
+      "보상·체험·위험을 확인한 뒤 이동합니다. 이 절편은 문지기 처치까지 진행합니다.",
+    ) +
+      `<section class="cards">${choices
+        .map((id) => {
+          const r = ROOMS.find((r) => r.id === id);
+          return `<button class="reward-card" id="door-${id}"><div class="eyebrow">위험 · ${r.risk}</div><h2>${r.name}</h2><p>체험: ${r.experience}<br>보상: ${r.reward}</p></button>`;
+        })
+        .join("")}</section>`,
+    {
+      back: pause,
+      ...Object.fromEntries(
+        choices.map((id) => [
+          `door-${id}`,
+          () => {
+            run.enter(id);
+            if (run.mode === "doors") doors();
+            else {
+              run.save(store);
+              play();
+            }
+          },
+        ]),
+      ),
+    },
+  );
+}
+function result() {
+  store.remove(RUN_KEY);
+  const won = run.mode === "victory";
+  view(
+    "result",
+    head(
+      "END OF THE VERTICAL SLICE",
+      won ? "첫 문을 열었다." : "다음엔 더 조용히.",
+      "V5 첫 절편 종료 · 5막/쇼군 엔딩을 완료한 결과가 아닙니다.",
+    ) +
+      `<section class="panel"><h2>${won ? "문지기를 쓰러뜨렸습니다." : "요괴도 가끔은 아픕니다."}</h2><p class="brief">${run.hero.name}: “${won ? "성은 생각보다 크네. 간식부터 챙기자." : "이번 건 연습이었어."}”</p><div class="stats"><span><b>${run.kills}</b>처치</span><span><b>${Math.floor(run.timePlayed)}s</b>전투 시간</span><span><b>${run.hits}</b>적중</span></div><div class="bottom-actions"><button id="again" class="primary">다른 요괴로 다시</button><button id="result-gallery">갤러리</button><button id="to-title">타이틀로</button></div></section>`,
+    {
+      back: title,
+      again: heroes,
+      "to-title": title,
+      "result-gallery": () => openGallery(result),
+    },
+  );
+}
+function confirmView(text, yes, no) {
+  view(
+    "confirm",
+    head("CONFIRM", text) +
+      `<section class="panel bottom-actions"><button id="no">취소</button><button class="primary" id="yes">확인</button></section>`,
+    { back: no, no, yes },
+  );
+}
+function settings(back) {
+  returnTo = back;
+  view(
+    "settings",
+    head("OPTIONS", "눈과 귀에 맞게.") +
+      `<section class="panel"><label class="settings-row">효과음 볼륨<input id="volume" type="range" min="0" max="1" step="0.05" value="${options.volume}"></label><label class="settings-row">피격 플래시<input id="flash" type="checkbox" ${options.flash ? "checked" : ""}></label><label class="settings-row">갤러리 라이벌 미리 공개 <input id="reveal" type="checkbox" ${options.reveal ? "checked" : ""}></label><p class="mini">라이벌 미리 공개는 감상용 옵션입니다. 조우 해금 기록은 바꾸지 않습니다.<br>화면 흔들림 없음 · BGM/음성 및 키 재설정은 미구현입니다.</p><div class="bottom-actions"><button id="reset-gallery">갤러리 해금 초기화</button><button id="backup">갤러리 백업</button></div><p class="mini">${store.persistent ? "설정/갤러리는 런과 별도로 저장됩니다." : "저장 접근 제한: 이 탭에서만 변경을 보존합니다."}</p></section>`,
+    {
+      back,
+      "reset-gallery": () =>
+        confirmView(
+          "갤러리 조우 해금만 초기화할까요?",
+          () => {
+            gallery.reset();
+            settings(back);
+          },
+          () => settings(back),
+        ),
+      backup: () => {
+        const blob = new Blob(
+          [JSON.stringify({ version: 1, ids: [...gallery.unlocked] }, null, 2)],
+          { type: "application/json" },
+        );
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "KAGE-IN-gallery-backup.json";
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      },
+    },
+  );
+  for (const id of ["volume", "flash", "reveal"])
+    $(id).oninput = () => {
+      options[id] = id === "volume" ? Number($(id).value) : $(id).checked;
+      store.write("kage-in.v5.options.v1", { version: 1, ...options });
+    };
+}
+function art(entry, locked = false) {
+  if (locked)
+    return '<div class="placeholder"><b>?</b><span>미해금 · 해당 라이벌과 조우</span></div>';
+  return `<img loading="lazy" src="../${escape(entry.asset)}" alt="${escape(entry.title)} 원본 아트"><div class="placeholder hidden"><b>未</b><span>원본 아트 미포함<br>${escape(entry.sourceFilename || entry.asset)}</span></div>`;
+}
+function bindImages() {
+  overlay.querySelectorAll("img").forEach((img) => {
+    const failed = () => {
+      img.classList.add("hidden");
+      img.nextElementSibling?.classList.remove("hidden");
+    };
+    img.onerror = failed;
+    if (img.complete && !img.naturalWidth) failed();
+  });
+}
+function openGallery(back) {
+  returnTo = back;
+  const tabs = [
+    ["hero", "캐릭터"],
+    ["rival", "라이벌"],
+    ["title", "타이틀 & 키아트"],
+    ["event", "이벤트 / 추후"],
+  ];
+  const entries = gallery.entries.filter((e) => e.category === galleryTab);
+  view(
+    "gallery",
+    head(
+      "THE ART OF KAGE//IN",
+      "기록 보관소",
+      "원본 PNG는 아직 미포함입니다. 공개 상태와 감상 기능은 아트 추가 후에도 유지됩니다.",
+    ) +
+      `<nav class="tabs">${tabs.map(([id, name]) => `<button id="tab-${id}" class="${galleryTab === id ? "selected" : ""}">${name}</button>`).join("")}</nav><section class="gallery-grid">${entries.map((e) => `<button class="art-card" id="art-${e.id}"><div class="art-frame">${art(e, !gallery.available(e, options.reveal))}</div><strong>${gallery.available(e, options.reveal) ? escape(e.title) : "미해금 작품"}</strong><small>${gallery.available(e, options.reveal) ? "감상하기 · 원본 파일 대기" : "라이벌과 조우하면 공개"}</small></button>`).join("") || '<p class="muted">이벤트 일러스트는 후속 단계입니다.</p>'}</section>`,
+    {
+      back,
+      ...Object.fromEntries(
+        tabs.map(([id]) => [
+          `tab-${id}`,
+          () => {
+            galleryTab = id;
+            openGallery(back);
+          },
+        ]),
+      ),
+      ...Object.fromEntries(
+        entries.map((e) => [
+          `art-${e.id}`,
+          () => {
+            if (!gallery.available(e, options.reveal)) {
+              toast(
+                "해당 라이벌을 만나면 해금됩니다. 설정에서 미리 공개할 수도 있습니다.",
+              );
+              return;
+            }
+            detailEntries = entries.filter((e) =>
+              gallery.available(e, options.reveal),
+            );
+            detailIndex = detailEntries.findIndex((x) => x.id === e.id);
+            zoom = 1;
+            info = true;
+            detail(back);
+          },
+        ]),
+      ),
+    },
+  );
+  bindImages();
+}
+function detail(back) {
+  const e = detailEntries[detailIndex];
+  view(
+    "detail",
+    head("GALLERY / ORIGINAL REFERENCE", escape(e.title)) +
+      `<section class="detail-image art-frame" id="detail-image">${art(e)}</section><div class="bottom-actions"><div><button id="previous">← 이전</button> <button id="next">다음 →</button></div><div><button id="zoom-out">−</button> <span id="zoom-value">${Math.round(zoom * 100)}%</span> <button id="zoom-in">＋</button> <button id="info">정보</button> <button id="fullscreen">전체화면</button></div></div><p id="detail-info" class="detail-info ${info ? "" : "hidden"}">파일: ${escape(e.asset)} · 상태: ${escape(e.designStatus || "reference")}<br>제공된 원본 파일만 사용합니다. 대체 생성 이미지가 아닙니다.</p>`,
+    {
+      back: () => openGallery(back),
+      previous: () => {
+        detailIndex =
+          (detailIndex + detailEntries.length - 1) % detailEntries.length;
+        zoom = 1;
+        detail(back);
+      },
+      next: () => {
+        detailIndex = (detailIndex + 1) % detailEntries.length;
+        zoom = 1;
+        detail(back);
+      },
+      "zoom-out": () => setZoom(zoom - 0.25),
+      "zoom-in": () => setZoom(zoom + 0.25),
+      info: () => {
+        info = !info;
+        $("detail-info").classList.toggle("hidden", !info);
+      },
+      fullscreen: async () => {
+        try {
+          if (document.fullscreenElement) await document.exitFullscreen();
+          else await $("detail-image").requestFullscreen();
+        } catch {
+          toast("이 브라우저에서는 전체화면 전환을 지원하지 않습니다.");
+        }
+      },
+    },
+  );
+  $("detail-image").onwheel = (e) => {
+    e.preventDefault();
+    setZoom(zoom + (e.deltaY < 0 ? 0.2 : -0.2));
+  };
+  bindImages();
+}
+function setZoom(value) {
+  zoom = clamp(value, 1, 4);
+  $("zoom-value").textContent = `${Math.round(zoom * 100)}%`;
+  const img = $("detail-image").querySelector("img");
+  if (img) img.style.transform = `scale(${zoom})`;
+}
+function codex(back) {
+  view(
+    "codex",
+    head(
+      "IMPLEMENTATION STATUS",
+      "V5, 현재 가능한 것.",
+      "O12 / S4 / Q48 명명과 조합 레지스트리. 실제 동작과 데이터 정의를 구분합니다.",
+    ) +
+      `<p class="brief">구현: 3인 기본타·E / 지원 4종 / 4속성 예약 / 방·보상·문지기 / 갤러리·저장.<br>미구현: 나머지 O9, Q48의 고유 판정, O/S 3분기, 5막 60분, 라이벌 실전, 정식 아트·음악.<br>조작: WASD 이동 · 마우스 조준 · 좌클릭 기본타 · E 공격기 · 우클릭 지원 · Space 회피 · 1/2/3/4 화/수/뇌/풍 · Esc 일시정지.</p><div class="catalogue">${OFFENSES.map((o) => `<div>${o.id} ${o.name}<small>${o.primary} / E ${o.active}</small><small>${o.implemented ? "기본 동작 구현" : "데이터만 정의 · 미구현"}</small></div>`).join("")}${FUSIONS.map((q) => `<div>${q.name}<small>${q.offenseId} × ${q.supportId} · ${q.behavior}</small><small>고유 판정 미구현</small></div>`).join("")}</div>`,
+    { back },
+  );
+}
+function menuKeys(e) {
+  const buttons = [...overlay.querySelectorAll("button:not(:disabled)")];
+  let current = buttons.indexOf(document.activeElement);
+  if (["ArrowDown", "ArrowRight", "ArrowUp", "ArrowLeft"].includes(e.code)) {
+    e.preventDefault();
+    if (screen === "detail" && ["ArrowLeft", "ArrowRight"].includes(e.code)) {
+      $(e.code === "ArrowLeft" ? "previous" : "next").click();
+      return;
+    }
+    const step = ["ArrowDown", "ArrowRight"].includes(e.code) ? 1 : -1;
+    selection = (Math.max(0, current) + step + buttons.length) % buttons.length;
+    buttons[selection]?.focus({ preventScroll: false });
+  }
+  if (e.code === "Escape") {
+    e.preventDefault();
+    $("back")?.click();
+  }
+}
+window.addEventListener("keydown", (e) => {
+  if (
+    ["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(
+      e.code,
+    )
+  )
+    e.preventDefault();
+  if (screen !== "combat") {
+    menuKeys(e);
+    return;
+  }
+  if (e.code === "Escape") {
+    pause();
+    return;
+  }
+  keys.add(e.code);
+  if (e.repeat) return;
+  if (e.code === "Space") edge.dash = true;
+  if (e.code === "KeyE") edge.active = true;
+  if (e.code === "KeyQ") edge.fusion = true;
+  const index = ["Digit1", "Digit2", "Digit3", "Digit4"].indexOf(e.code);
+  if (index >= 0) edge.element = index;
+});
+window.addEventListener("keyup", (e) => keys.delete(e.code));
+canvas.addEventListener("pointermove", (e) => {
+  const rect = canvas.getBoundingClientRect();
+  aim = {
+    x: ((e.clientX - rect.left) * 1440) / rect.width,
+    y: ((e.clientY - rect.top) * 810) / rect.height,
+  };
+});
+canvas.addEventListener("pointerdown", (e) => {
+  if (screen !== "combat") return;
+  if (e.button === 0) attack = true;
+  if (e.button === 2) edge.support = true;
+});
+window.addEventListener("pointerup", (e) => {
+  if (e.button === 0) attack = false;
+});
+canvas.addEventListener("contextmenu", (e) => e.preventDefault());
+window.addEventListener("blur", () => {
+  clearInput();
+  if (screen === "combat") pause();
+});
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden && screen === "combat") pause();
+});
+let hudAt = 0;
+function frame(now) {
+  const dt = Math.min(0.08, (now - last) / 1000 || 0);
+  last = now;
+  if (run && screen === "combat") {
+    const before = run.t,
+      hits = run.hits;
+    run.tick(dt, {
+      x: Number(keys.has("KeyD")) - Number(keys.has("KeyA")),
+      y: Number(keys.has("KeyS")) - Number(keys.has("KeyW")),
+      attack,
+      aim,
+      ...edge,
+    });
+    if (run.t > before) for (const k of Object.keys(edge)) delete edge[k];
+    if (run.hits > hits) beep(run.heroId === "HERO_GORO" ? 110 : 520);
+    if (run.mode !== lastMode) {
+      lastMode = run.mode;
+      if (run.mode === "reward") rewards();
+      else if (["dead", "victory"].includes(run.mode)) result();
+    }
+    if (now - hudAt > 80 && screen === "combat") {
+      updateHUD();
+      hudAt = now;
+    }
+  }
+  draw(
+    ctx,
+    screen === "title" || screen === "heroes" || screen === "exit" ? null : run,
+    now / 1000,
+    options,
+  );
+  requestAnimationFrame(frame);
+}
+async function boot() {
+  try {
+    manifest =
+      window.KAGE_GALLERY ||
+      (await fetch("../assets/kage-in/gallery/gallery_manifest.json").then(
+        (r) => {
+          if (!r.ok) throw Error(r.status);
+          return r.json();
+        },
+      ));
+    if (!Array.isArray(manifest.entries)) throw Error("Invalid manifest");
+    gallery = new GalleryState(manifest, store);
+    title();
+    requestAnimationFrame(frame);
+    window.kageV5 = {
+      snapshot: () => ({
+        screen,
+        run: run?.snapshot() || null,
+        persistent: store.persistent,
+        gallery: gallery.entries.map((e) => ({
+          id: e.id,
+          unlocked: gallery.available(e, options.reveal),
+        })),
+      }),
+      version: "V5-web-slice",
+    };
+  } catch (e) {
+    overlay.textContent =
+      "갤러리 목록을 불러오지 못했습니다. 개발 서버 또는 단독 HTML 빌드로 실행하세요.";
+    console.error(e);
+  }
+}
+boot();
+
+return {};
+})();
+})();</script>
+  </body>
+</html>

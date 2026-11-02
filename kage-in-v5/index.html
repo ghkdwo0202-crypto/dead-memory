@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#101515" />
+    <title>KAGE//IN — V5 플레이 절편</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main id="app">
+      <canvas
+        id="world"
+        width="1440"
+        height="810"
+        aria-label="KAGE IN 탑다운 전투 화면"
+      ></canvas>
+      <div id="hud" class="hidden"></div>
+      <div id="overlay"></div>
+      <div id="toast" role="status"></div>
+      <div id="build-label">V5 / WEB PROTOTYPE · 원본 아트 미포함</div>
+    </main>
+    <script type="module" src="./game.js"></script>
+  </body>
+</html>

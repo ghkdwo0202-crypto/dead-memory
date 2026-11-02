@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "artStyle": "Kitsune-approved clean pixel/ink look; no heavy procedural noise",
+  "assetsStatus": "local-reference-only; binary images not yet committed to git",
+  "entries": [
+    {
+      "id": "hero_karasu",
+      "category": "hero",
+      "title": "카라스",
+      "sourceFilename": "19793.png",
+      "asset": "assets/kage-in/portraits/hero_karasu.png",
+      "unlock": "default",
+      "designStatus": "locked"
+    },
+    {
+      "id": "hero_kitsune",
+      "category": "hero",
+      "title": "키츠네",
+      "sourceFilename": "19794.png",
+      "asset": "assets/kage-in/portraits/hero_kitsune.png",
+      "unlock": "default",
+      "designStatus": "locked-master-style"
+    },
+    {
+      "id": "hero_goro",
+      "category": "hero",
+      "title": "고로",
+      "sourceFilename": "19805.png",
+      "asset": "assets/kage-in/portraits/hero_goro.png",
+      "unlock": "default",
+      "designStatus": "locked-remove-back-cannon"
+    },
+    {
+      "id": "rival_shiroha",
+      "category": "rival",
+      "title": "시로하",
+      "sourceFilename": "오만한_깃털_검객의_초상.png",
+      "asset": "assets/kage-in/portraits/rival_shiroha.png",
+      "unlock": "encounter:rival_shiroha",
+      "designStatus": "first-face-locked-palette-pending"
+    },
+    {
+      "id": "rival_nekomata",
+      "category": "rival",
+      "title": "네코마타",
+      "sourceFilename": "낡은_닌자_차림의_네코마타와_금화.png",
+      "asset": "assets/kage-in/portraits/rival_nekomata.png",
+      "unlock": "encounter:rival_nekomata",
+      "designStatus": "simplified-costume-palette-pending"
+    },
+    {
+      "id": "rival_akado",
+      "category": "rival",
+      "title": "아카도",
+      "sourceFilename": "광기의_오니_아카도_달빛_아래의_도전.png",
+      "asset": "assets/kage-in/portraits/rival_akado.png",
+      "unlock": "encounter:rival_akado",
+      "designStatus": "aged-mad-oni-selected"
+    },
+    {
+      "id": "title_screen",
+      "category": "title",
+      "title": "KAGE//IN 메인 타이틀",
+      "sourceFilename": "붉은_달_아래_카게인_타이틀_화면.png",
+      "asset": "assets/kage-in/title/title_screen_reference.png",
+      "unlock": "default",
+      "designStatus": "title-reference"
+    }
+  ]
+}

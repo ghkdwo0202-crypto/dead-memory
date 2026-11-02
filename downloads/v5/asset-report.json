@@ -1,0 +1,40 @@
+{
+  "source": "PR #9 / 995d7d8",
+  "missing": [
+    {
+      "id": "hero_karasu",
+      "asset": "assets/kage-in/portraits/hero_karasu.png",
+      "sourceFilename": "19793.png"
+    },
+    {
+      "id": "hero_kitsune",
+      "asset": "assets/kage-in/portraits/hero_kitsune.png",
+      "sourceFilename": "19794.png"
+    },
+    {
+      "id": "hero_goro",
+      "asset": "assets/kage-in/portraits/hero_goro.png",
+      "sourceFilename": "19805.png"
+    },
+    {
+      "id": "rival_shiroha",
+      "asset": "assets/kage-in/portraits/rival_shiroha.png",
+      "sourceFilename": "오만한_깃털_검객의_초상.png"
+    },
+    {
+      "id": "rival_nekomata",
+      "asset": "assets/kage-in/portraits/rival_nekomata.png",
+      "sourceFilename": "낡은_닌자_차림의_네코마타와_금화.png"
+    },
+    {
+      "id": "rival_akado",
+      "asset": "assets/kage-in/portraits/rival_akado.png",
+      "sourceFilename": "광기의_오니_아카도_달빛_아래의_도전.png"
+    },
+    {
+      "id": "title_screen",
+      "asset": "assets/kage-in/title/title_screen_reference.png",
+      "sourceFilename": "붉은_달_아래_카게인_타이틀_화면.png"
+    }
+  ]
+}

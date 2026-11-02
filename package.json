@@ -6,11 +6,15 @@
   "scripts": {
     "start": "node scripts/serve.mjs",
     "build:pages": "node scripts/build-pages.mjs",
-    "test": "node tests/combat.test.js && node tests/action-axis.test.js",
-    "check": "node --check src/game.js && node --check src/core.js && node --check src/data.js && node --check src/render.js && node --check src/navigation.js && node --check src/storage.js",
+    "test": "node tests/combat.test.js && node tests/action-axis.test.js && node tests/v5.test.js",
+    "check": "node --check src/game.js && node --check src/core.js && node --check src/data.js && node --check src/render.js && node --check src/navigation.js && node --check src/storage.js && npm run check:v5",
     "test:browser": "node scripts/browser-smoke.mjs",
     "build:standalone": "node scripts/build-standalone.mjs",
-    "build:download": "node scripts/build-standalone.mjs --release"
+    "build:download": "node scripts/build-standalone.mjs --release",
+    "test:v5": "node tests/v5.test.js",
+    "check:v5": "node --check kage-in-v5/data.js && node --check kage-in-v5/model.js && node --check kage-in-v5/render.js && node --check kage-in-v5/game.js",
+    "build:v5": "node scripts/build-v5.mjs",
+    "test:v5:browser": "node scripts/v5-browser.mjs"
   },
   "engines": {
     "node": ">=22"
